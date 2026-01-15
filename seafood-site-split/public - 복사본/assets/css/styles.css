@@ -260,19 +260,57 @@ body.admin-mode .admin-only, body.design-mode .design-btn { display: flex !impor
 
 /* 모바일 카드 뷰 (Responsive Admin) */
 @media (max-width: 768px) {
+    .admin-table-container {
+        overflow-x: visible;
+    }
+
+    .admin-table-container table {
+        min-width: auto;
+        display: block;
+    }
+
+    .admin-table-container thead {
+        display: none !important;
+    }
+
+    .admin-table-container tbody {
+        display: block;
+    }
+
     .admin-table-th { display: none; }
     .admin-table-row {
-        display: flex; flex-direction: column; padding: 20px; margin-bottom: 16px;
-        background: white; border-radius: 16px; border: 1px solid #e2e8f0; box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+        display: flex !important;
+        flex-direction: column;
+        padding: 20px;
+        margin-bottom: 16px;
+        background: white;
+        border-radius: 16px;
+        border: 1px solid #e2e8f0;
+        box-shadow: 0 1px 2px rgba(0,0,0,0.05);
     }
     .admin-table-td {
-        padding: 4px 0; border: none; display: flex; justify-content: space-between; align-items: center; width: 100%; white-space: normal;
+        padding: 8px 0;
+        border: none;
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        width: 100%;
+        white-space: normal;
     }
     .admin-table-td:first-child { display: none; } /* 체크박스 숨김 */
-    
-    .mobile-label { display: inline-block; font-weight: 700; color: #64748b; margin-right: auto; font-size: 11px; width: 70px; }
+
+    .mobile-label {
+        display: inline-block;
+        font-weight: 700;
+        color: #64748b;
+        margin-right: 12px;
+        font-size: 11px;
+        min-width: 70px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
     .mobile-hide { display: none !important; }
-    .mobile-card-actions { margin-top: 12px; justify-content: flex-end; }
+    .mobile-card-actions { margin-top: 12px; justify-content: flex-end; padding-top: 12px; border-top: 1px solid #f1f5f9; }
 }
 @media (min-width: 769px) { .mobile-label { display: none; } }
 

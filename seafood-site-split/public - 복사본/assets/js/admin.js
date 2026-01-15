@@ -698,12 +698,12 @@ window.registerAnswer = async (id) => {
     const currentText = currentTextEl ? currentTextEl.innerText.trim() : "";
     const isPlaceholder = currentText === "답변 대기중" || currentText === "아직 답변이 등록되지 않았습니다." || currentText === "";
 
-    // [기능 복구] 프롬프트 대신 깔끔한 답변 모달 생성 (관리자 대시보드 내부에 추가)
+    // [기능 복구] 프롬프트 대신 깔끔한 답변 모달 생성 (전역에 추가하되 매우 높은 z-index)
     if(!document.getElementById('answer-modal')) {
         const m = document.createElement('div');
         m.id = 'answer-modal';
-        m.className = 'absolute inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 hidden';
-        m.style.zIndex = '400'; // 문의 상세 모달(z-300)보다 높게
+        m.className = 'fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 hidden';
+        m.style.zIndex = '9999'; // 문의 상세 모달(z-300)보다 훨씬 높게
         m.innerHTML = `
             <div class="bg-white rounded-2xl w-full max-w-lg p-6 shadow-2xl transform transition-all scale-100" onclick="event.stopPropagation()">
                 <h3 class="text-lg font-bold mb-4 text-slate-800">답변 작성</h3>
@@ -713,8 +713,8 @@ window.registerAnswer = async (id) => {
                     <button id="answer-submit-btn" class="px-6 py-2.5 rounded-xl bg-slate-900 text-white font-bold hover:bg-slate-800 text-sm shadow-lg transition">저장하기</button>
                 </div>
             </div>`;
-        // 관리자 대시보드 내부에 추가
-        document.getElementById('admin-dashboard').appendChild(m);
+        // body에 직접 추가 (관리자만 사용하므로 안전)
+        document.body.appendChild(m);
 
         // 모달 오버레이 클릭 시 닫기
         document.getElementById('answer-modal').onclick = (e) => {
