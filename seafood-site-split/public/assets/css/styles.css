@@ -1,0 +1,195 @@
+/* 1. Deep Ocean Theme & Pretendard */
+    :root { 
+        --theme-color: #0f172a; 
+        --theme-accent: #3b82f6;
+        --admin-bg: #f1f5f9; 
+        --admin-sidebar: #0f172a; /* 다크 사이드바 */
+        --admin-text-main: #1e293b;
+        --admin-text-sub: #64748b;
+    }
+    body { 
+        font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, Roboto, sans-serif; 
+        scroll-behavior: smooth; 
+        -webkit-tap-highlight-color: transparent; 
+        background-color: #f8fafc; /* Ice White Tone */
+        color: #1e293b;
+        letter-spacing: -0.02em; /* 폰트 자간 조정으로 세련미 추가 */
+    }
+
+    /* 유틸리티 */
+    .text-theme { color: var(--theme-color) !important; }
+    .bg-theme { background-color: var(--theme-color) !important; }
+    .border-theme { border-color: var(--theme-color) !important; }
+    .hover-bg-theme:hover { background-color: var(--theme-color) !important; }
+
+    /* 5. 인터랙티브 버튼 (타격감) */
+    button:active, .btn-active:active { transform: scale(0.95); transition: transform 0.1s; }
+
+    /* 2. 스크롤 애니메이션 (Scroll Reveal) */
+    .reveal { opacity: 0; transform: translateY(30px); transition: all 0.8s ease-out; }
+    .reveal.active { opacity: 1; transform: translateY(0); }
+
+    /* PC 레이아웃 제한 */
+    .content-container { max-width: 1024px; margin: 0 auto; background-color: #fff; min-height: 100vh; box-shadow: 0 0 40px rgba(0,0,0,0.05); }
+
+    .hero-bg {
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+      transition: background-image 0.5s ease;
+    }
+    
+    /* 히어로 섹션 그라데이션 (가독성 UP) */
+    .hero-overlay {
+        background: linear-gradient(to bottom, rgba(15, 23, 42, 0.1) 0%, rgba(15, 23, 42, 0.8) 100%);
+    }
+
+    /* 로딩 스크린 */
+    #app-loader {
+      position: fixed; inset: 0; background: #f8fafc; z-index: 9999;
+      display: flex; flex-direction: column; justify-content: center; align-items: center;
+      transition: opacity 0.5s ease-out, visibility 0.5s;
+    }
+    .loader-icon { font-size: 4rem; animation: float 2s ease-in-out infinite; }
+    @keyframes float { 0%,100%{transform:translateY(0);} 50%{transform:translateY(-15px);} }
+    .loader-hidden { opacity: 0; visibility: hidden; pointer-events: none; }
+
+    /* 스켈레톤 UI */
+    .skeleton { background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%); background-size: 200% 100%; animation: skeleton-loading 1.5s infinite; border-radius: 8px; }
+    @keyframes skeleton-loading { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+
+    /* 디자인 수정 모드 */
+    body.design-mode .editable {
+      position: relative; cursor: pointer; border: 2px dashed #ef4444; border-radius: 6px; z-index: 100;
+    }
+    body.design-mode .editable::after {
+      content: 'EDIT'; position: absolute; top: -10px; right: -5px; background: #ef4444; color: white;
+      font-size: 9px; font-weight: bold; padding: 2px 6px; border-radius: 99px;
+    }
+
+    /* 관리자 요소 제어 */
+    .admin-only, .design-btn { display: none !important; }
+    body.admin-mode .admin-only, body.design-mode .design-btn { display: flex !important; }
+
+    /* PC 퀵 메뉴 */
+    .pc-quick-menu {
+        position: fixed; right: calc(50% - 620px); top: 50%; transform: translateY(-50%);
+        z-index: 40; display: flex; flex-direction: column; gap: 16px;
+    }
+    @media (max-width: 1280px) { .pc-quick-menu { right: 20px; } }
+
+    /* 애니메이션 */
+    @keyframes bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-3px); } }
+    .cart-bounce { animation: bounce 0.5s infinite; }
+    .page-hidden { display: none !important; }
+    .page-nav-active { color: var(--theme-color) !important; font-weight: 700; border-bottom: 2px solid var(--theme-color); }
+    
+    /* 모바일 하단바 (5개 아이템 대응) */
+    .mobile-nav-btn {
+        display: flex; flex-direction: column; items-align: center; justify-content: center;
+        height: 100%; width: 100%; color: #94a3b8; transition: color 0.2s;
+    }
+    .mobile-nav-active { color: var(--theme-color) !important; }
+    .mobile-nav-active svg { stroke: var(--theme-color); stroke-width: 2.5px; }
+    
+    /* 품절 스타일 */
+    .sold-out { pointer-events: none; }
+    .sold-out .img-container::after { 
+        content: ""; position: absolute; inset: 0; background-color: rgba(15, 23, 42, 0.6); 
+    }
+    .sold-out-badge { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; color: white; font-weight: 800; font-size: 1.2rem; z-index: 10; letter-spacing: 1px; }
+    .category-chip.selected { background-color: var(--theme-color); color: white; border-color: var(--theme-color); box-shadow: 0 4px 6px -1px rgba(15, 23, 42, 0.3); }
+
+    /* FAB 스타일 (대시보드 진입용) */
+    .fab-container { pointer-events: none; }
+    .fab-main-btn { pointer-events: auto; position: fixed; bottom: 100px; right: 20px; z-index: 100; width: 56px; height: 56px; border-radius: 28px; background: var(--theme-color); color: white; display: flex; align-items: center; justify-content: center; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.3); cursor: pointer; transition: transform 0.3s; }
+    .fab-main-btn:hover { transform: scale(1.1); }
+
+    /* 블로그 카드 & 이미지 */
+    .blog-card { border-radius: 16px; overflow: hidden; background: white; border: 1px solid #f1f5f9; transition: all 0.3s; cursor: pointer; }
+    .blog-card:hover { transform: translateY(-4px); box-shadow: 0 20px 25px -5px rgba(0,0,0,0.05); }
+    .img-fallback { background: linear-gradient(135deg, #f1f5f9 0%, #cbd5e1 100%); display: flex; align-items: center; justify-content: center; color: #94a3b8; font-size: 0.8rem; font-weight: bold; }
+    
+    /* 2. Zoom Effect (이미지 확대) */
+    .img-zoom-container { overflow: hidden; }
+    .img-zoom-container img { transition: transform 0.5s ease; }
+    .group:hover .img-zoom-container img { transform: scale(1.08); }
+
+    .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+    .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+    .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 2px; }
+
+    /* 모달 */
+    .modal-overlay { 
+        position: fixed; inset: 0; background-color: rgba(15, 23, 42, 0.7); 
+        z-index: 150; display: flex; align-items: center; justify-content: center; 
+        padding: 1rem; backdrop-filter: blur(8px); 
+    }
+
+    /* 공지사항 바 디자인 개선 */
+    .notice-bar-gradient { background: linear-gradient(to right, #f8fafc, #f1f5f9, #f8fafc); border-bottom: 1px solid #e2e8f0; }
+    .toast-enter { animation: slideInRight 0.3s cubic-bezier(0.16, 1, 0.3, 1); }
+    @keyframes slideInRight { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+
+    /* --- [NEW] Master Admin Dashboard Styles --- */
+    #admin-dashboard { transition: opacity 0.3s ease-in-out; background-color: var(--admin-bg); }
+    
+    /* 사이드바 - Dark Theme로 변경하여 관리자 느낌 강화 */
+    .admin-sidebar { background-color: var(--admin-sidebar); color: #94a3b8; border-right: none; box-shadow: 4px 0 24px rgba(0,0,0,0.05); }
+    .admin-sidebar-section { padding: 0 1.5rem; margin-top: 2rem; margin-bottom: 0.75rem; font-size: 0.7rem; font-weight: 800; color: #475569; text-transform: uppercase; letter-spacing: 0.05em; }
+    
+    .admin-sidebar-item { 
+        @apply flex items-center gap-3 px-6 py-3.5 text-slate-400 transition-all cursor-pointer font-medium text-sm border-l-[3px] border-transparent;
+        margin-right: 0; border-radius: 0;
+    }
+    .admin-sidebar-item:hover { @apply bg-white/5 text-white; }
+    .admin-sidebar-item.active { @apply bg-white/10 text-white border-blue-500; font-weight: 600; }
+    .admin-sidebar-item svg { width: 20px; height: 20px; stroke-width: 2px; }
+
+    /* 카드 - 입체감과 깔끔함 */
+    .admin-card { 
+        @apply bg-white p-6 rounded-2xl border border-slate-200/60 shadow-sm transition hover:shadow-md relative overflow-hidden; 
+        display: flex; flex-direction: column; justify-content: space-between; height: 100%;
+    }
+    
+    /* 테이블 - 시인성 강화 */
+    .admin-table-container { @apply bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden; }
+    .admin-table-th { @apply px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider bg-slate-50/80 border-b border-slate-200; }
+    .admin-table-td { @apply px-6 py-4 whitespace-nowrap text-sm text-slate-700 border-b border-slate-100 transition-colors group-hover:bg-slate-50/50; }
+    .admin-table-row:last-child .admin-table-td { border-bottom: none; }
+    
+    /* 뱃지 - Pill Shape */
+    .saas-badge { @apply inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-bold ring-1 ring-inset; }
+    .saas-badge-blue { @apply bg-blue-50 text-blue-700 ring-blue-600/10; }
+    .saas-badge-green { @apply bg-emerald-50 text-emerald-700 ring-emerald-600/10; }
+    .saas-badge-red { @apply bg-rose-50 text-rose-700 ring-rose-600/10; }
+    .saas-badge-gray { @apply bg-slate-100 text-slate-600 ring-slate-500/10; }
+    
+    /* 액션 버튼 */
+    .saas-action-btn { @apply p-2 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-slate-800 transition shadow-sm border border-transparent hover:border-slate-200; }
+    
+    /* 검색바 & 입력폼 */
+    .saas-search-input { 
+        @apply w-full pl-10 pr-4 py-3 text-sm border border-slate-200 rounded-xl bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 outline-none transition placeholder-slate-400 font-medium; 
+    }
+    .saas-btn-primary {
+        @apply bg-slate-900 text-white px-5 py-2.5 rounded-xl font-bold text-sm shadow-lg shadow-slate-200 hover:bg-slate-800 hover:-translate-y-0.5 transition active:scale-95 flex items-center gap-2;
+    }
+
+    /* 탭 전환 애니메이션 */
+    .admin-tab-content { animation: fadeIn 0.3s cubic-bezier(0.16, 1, 0.3, 1); }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+    /* 모바일 카드 뷰 (Responsive) */
+    @media (max-width: 768px) {
+        .admin-table-th { display: none; }
+        .admin-table-row { display: flex; flex-direction: column; padding: 1.25rem; border-bottom: 8px solid #f8fafc; position: relative; }
+        .admin-table-row:last-child { border-bottom: none; }
+        .admin-table-td { border: none; padding: 0.15rem 0; }
+        .admin-table-td:first-child { font-size: 0.75rem; color: #94a3b8; margin-bottom: 0.5rem; } /* Date */
+        .mobile-card-actions { position: absolute; top: 1.25rem; right: 1.25rem; flex-direction: row; gap: 0.5rem; }
+    }
+    
+    /* 가로 스크롤 숨김 */
+    .hide-scrollbar::-webkit-scrollbar { display: none; }
+    .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }

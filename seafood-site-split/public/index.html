@@ -1,0 +1,748 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <link rel="stylesheet" href="./assets/css/styles.css">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  
+  <!-- SEO Meta Tags (동적으로 변경됨) -->
+  <title>바다의 먹거리 - 대광수산</title>
+  <meta name="description" content="노량진 수산시장 대광수산. 당일 조업한 신선한 활어회, 해산물을 산지 직송으로 만나보세요. 전국 택배 가능." id="meta-desc">
+  <link rel="canonical" href="https://dgss-58aec.web.app/" id="canonical-url">
+  
+  <!-- Open Graph -->
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="바다의 먹거리 - 대광수산" id="og-title">
+  <meta property="og:description" content="노량진 수산시장 대광수산. 당일 조업한 신선한 활어회, 해산물을 산지 직송으로 만나보세요." id="og-desc">
+  <meta property="og:image" content="https://cdn-icons-png.flaticon.com/512/2921/2921822.png">
+  <meta property="og:url" content="https://dgss-58aec.web.app/" id="og-url">
+  
+  <!-- 구조화된 데이터 (JSON-LD) -->
+  <script type="application/ld+json" id="structured-data">
+  {
+    "@context": "https://schema.org",
+    "@type": "SeafoodBusiness",
+    "name": "대광수산",
+    "image": "https://cdn-icons-png.flaticon.com/512/2921/2921822.png",
+    "telephone": "010-6524-0520",
+    "address": {
+      "@type": "PostalAddress",
+      "streetAddress": "노량진 수산시장 1층 100호",
+      "addressLocality": "서울",
+      "addressCountry": "KR"
+    },
+    "openingHoursSpecification": {
+      "@type": "OpeningHoursSpecification",
+      "dayOfWeek": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"],
+      "opens": "09:00",
+      "closes": "18:00"
+    },
+    "url": "https://dgss-58aec.web.app/"
+  }
+  </script>
+
+  <!-- 1. 프리미엄 타이포그래피: Pretendard 폰트 적용 -->
+  <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  
+</head>
+
+<body class="bg-gray-50 text-gray-800 pb-24 md:pb-0">
+
+  <!-- 로딩 오버레이 -->
+  <div id="app-loader">
+    <div class="loader-icon">🐚</div>
+    <p class="text-slate-600 font-bold mt-4 animate-pulse text-sm tracking-widest">FRESH MARKET</p>
+  </div>
+
+  <!-- 토스트 알림 -->
+  <div id="toast-container" class="fixed top-20 right-4 z-[9999] flex flex-col gap-3 pointer-events-none"></div>
+
+  <!-- Lightbox Modal -->
+  <div id="lightbox-modal" class="modal-overlay hidden z-[200]" onclick="document.getElementById('lightbox-modal').classList.add('hidden')">
+      <img id="lightbox-img" src="" class="max-w-full max-h-[90vh] rounded-lg shadow-2xl transition-transform transform scale-95 md:scale-100" onclick="event.stopPropagation()">
+      <button class="absolute top-5 right-5 text-white p-2 bg-black/50 rounded-full hover:bg-black/70"><i data-lucide="x" size="24"></i></button>
+  </div>
+
+  <!-- Header -->
+  <header class="fixed w-full z-50 bg-white/90 backdrop-blur-md shadow-sm transition-all duration-300 border-b border-gray-100" id="main-header">
+    <div class="content-container px-5 py-3 md:py-4 flex justify-between items-center !min-h-0 !bg-transparent !shadow-none">
+      <div class="flex items-center gap-2.5 cursor-pointer group" onclick="window.handleLogoClick(event)">
+        <div class="text-theme w-8 h-8 flex items-center justify-center group-hover:scale-110 transition">
+           <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="currentColor" stroke="none">
+             <path d="M12 2C6.48 2 2 6.48 2 12c0 3.3 1.6 6.2 4.1 8 .6.4 1.4-.1 1.4-.8 0-.3-.1-.5-.3-.7C5.4 17.2 4.5 15.2 4.5 13c0-4.1 3.4-7.5 7.5-7.5s7.5 3.4 7.5 7.5c0 2.2-.9 4.2-2.7 5.5-.2.2-.3.4-.3.7 0 .7.8 1.2 1.4.8 2.5-1.8 4.1-4.7 4.1-8 0-5.52-4.48-10-10-10z"/>
+             <path d="M12 20c-1.1 0-2-.9-2-2 0-2.5 4-2.5 4 0 0 1.1-.9 2-2 2z"/>
+             <path d="M12 6c-1.5 0-3 2-3 4s1.5 4 3 4 3-2 3-4-1.5-4-3-4z" opacity="0.6"/>
+           </svg>
+        </div>
+        <h1 class="text-xl md:text-2xl font-bold text-slate-800 tracking-tight cursor-pointer editable-target"
+            id="store-name-display"
+            onclick="window.handleTitleClick(event)">
+          대광수산
+        </h1>
+      </div>
+
+      <nav class="hidden md:flex space-x-8 font-medium text-slate-500 text-sm">
+        <button class="hover:text-theme transition py-2" data-page-link="main" onclick="window.navigate('main')">메인</button>
+        <button class="hover:text-theme transition py-2" data-page-link="menu" onclick="window.navigate('menu')">전체메뉴</button>
+        <button class="hover:text-theme transition py-2" data-page-link="order" onclick="window.navigate('order')">주문하기</button>
+        <button class="hover:text-theme transition py-2" data-page-link="inquiry" onclick="window.navigate('inquiry')">문의하기</button>
+        <button class="hover:text-theme transition py-2" data-page-link="location" onclick="window.navigate('location')">찾아오기</button>
+      </nav>
+
+      <div class="flex items-center gap-2 md:gap-4">
+        <button onclick="window.toggleCart()" class="relative p-2 text-slate-600 hover:text-theme transition group">
+          <i data-lucide="shopping-bag" class="w-6 h-6 stroke-[1.5]"></i>
+          <span id="cart-count" class="absolute top-0 right-0 bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full hidden border-2 border-white shadow-sm">0</span>
+        </button>
+        <button onclick="window.navigate('order')" class="hidden md:block bg-theme text-white px-6 py-2.5 rounded-full text-sm font-bold hover:brightness-110 transition shadow-lg shadow-slate-200">
+          주문하기
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- PC용 플로팅 사이드바 -->
+  <div class="hidden md:flex pc-quick-menu">
+    <a href="tel:010-6524-0520" id="pc-btn-call" class="bg-green-500 p-4 rounded-full shadow-lg text-white hover:bg-green-600 hover:scale-110 transition group relative" title="전화주문">
+      <i data-lucide="phone" size="24"></i>
+      <span class="absolute right-full mr-5 bg-slate-800 text-white text-xs px-3 py-1.5 rounded opacity-0 group-hover:opacity-100 transition whitespace-nowrap top-1/2 -translate-y-1/2 shadow-xl font-bold">전화주문</span>
+    </a>
+    <a href="sms:010-6524-0520" id="pc-btn-sms" class="bg-blue-500 p-4 rounded-full shadow-lg text-white hover:bg-blue-600 hover:scale-110 transition group relative" title="문자문의">
+      <i data-lucide="message-circle" size="24"></i>
+      <span class="absolute right-full mr-5 bg-slate-800 text-white text-xs px-3 py-1.5 rounded opacity-0 group-hover:opacity-100 transition whitespace-nowrap top-1/2 -translate-y-1/2 shadow-xl font-bold">문자문의</span>
+    </a>
+    <button onclick="window.shareSite()" class="bg-yellow-400 p-4 rounded-full shadow-lg text-white hover:bg-yellow-500 hover:scale-110 transition group relative" title="공유하기">
+      <i data-lucide="share-2" size="24"></i>
+      <span class="absolute right-full mr-5 bg-slate-800 text-white text-xs px-3 py-1.5 rounded opacity-0 group-hover:opacity-100 transition whitespace-nowrap top-1/2 -translate-y-1/2 shadow-xl font-bold">공유하기</span>
+    </button>
+  </div>
+
+  <!-- Main Page -->
+  <div id="main" data-page="main">
+    <section id="hero-section" class="hero-bg h-[50vh] md:h-[60vh] flex items-center justify-center text-center text-white px-6 pt-16 relative group">
+      <div class="absolute inset-0 hero-overlay z-0"></div>
+      
+      <label class="design-btn absolute top-24 right-6 bg-red-500 text-white px-3 py-1.5 rounded-full text-xs font-bold z-50 shadow-lg cursor-pointer hover:bg-red-600 transition">
+        🖼️ 배경 변경
+        <input type="file" accept="image/*" class="hidden" onchange="window.handleImageUpload(this, 'heroImage')">
+      </label>
+
+      <div class="relative z-10 max-w-3xl animate-fade-in-up">
+        <p class="text-blue-200 font-bold mb-4 tracking-[0.3em] editable-target uppercase text-xs md:text-sm"
+           id="hero-subtitle-display"
+           onclick="window.handleEdit('heroSubtitle', '메인 상단 문구')">PREMIUM SEAFOOD MARKET</p>
+        <h2 class="text-4xl md:text-6xl font-extrabold mb-8 leading-tight editable-target drop-shadow-2xl"
+            id="hero-title-display"
+            onclick="window.handleEdit('heroTitle', '메인 큰 제목')">
+          오늘 조업한 싱싱함을<br>식탁까지 보내드립니다
+        </h2>
+        <p class="text-base md:text-xl mb-10 opacity-90 editable-target font-light leading-relaxed"
+           id="hero-desc-display"
+           onclick="window.handleEdit('heroDesc', '메인 설명 문구')">
+          산지 직송, 당일 발송 원칙을 지키는<br class="md:hidden">프리미엄 수산물 마켓
+        </p>
+        <div class="flex flex-col sm:flex-row gap-4 justify-center">
+          <button onclick="window.navigate('menu')" class="bg-white text-slate-900 px-8 py-3.5 rounded-full font-bold hover:bg-slate-100 transition shadow-xl flex items-center gap-2 justify-center">상품 구경하기 <i data-lucide="arrow-right" size="18"></i></button>
+        </div>
+      </div>
+    </section>
+
+    <!-- 공지사항 바 -->
+    <section class="bg-white border-b border-gray-100 relative z-20 shadow-sm notice-bar-gradient reveal">
+        <div class="content-container px-5 py-3.5 !bg-transparent !shadow-none !min-h-0">
+            <div onclick="window.openNoticeListModal()" class="flex items-center gap-3 cursor-pointer group">
+                <span class="bg-red-500 text-white text-[10px] font-bold px-2.5 py-0.5 rounded-full animate-pulse shrink-0">NOTICE</span>
+                <p id="latest-notice-title" class="text-sm flex-1 truncate font-medium text-slate-600 group-hover:text-theme transition-colors">새로운 소식이 도착했습니다.</p>
+                <i data-lucide="chevron-right" size="16" class="text-slate-400 group-hover:translate-x-1 transition-transform"></i>
+            </div>
+        </div>
+    </section>
+
+    <!-- Mobile SNS -->
+    <section class="md:hidden container mx-auto px-5 mt-8 reveal">
+      <div class="bg-white rounded-2xl shadow-sm p-5 grid grid-cols-3 gap-3 border border-slate-100">
+        <a id="btn-call" href="tel:010-6524-0520" class="flex flex-col items-center justify-center gap-2 hover:bg-slate-50 p-2 rounded-xl transition">
+          <div class="w-10 h-10 bg-green-50 text-green-600 rounded-full flex items-center justify-center"><i data-lucide="phone"></i></div>
+          <span class="text-xs font-bold text-slate-600">전화주문</span>
+        </a>
+        <a id="btn-sms" href="sms:010-6524-0520" class="flex flex-col items-center justify-center gap-2 hover:bg-slate-50 p-2 rounded-xl transition">
+          <div class="w-10 h-10 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center"><i data-lucide="message-square"></i></div>
+          <span class="text-xs font-bold text-slate-600">문자문의</span>
+        </a>
+        <button onclick="window.shareSite()" class="flex flex-col items-center justify-center gap-2 hover:bg-slate-50 p-2 rounded-xl transition">
+          <div class="w-10 h-10 bg-yellow-50 text-yellow-600 rounded-full flex items-center justify-center"><i data-lucide="share-2"></i></div>
+          <span class="text-xs font-bold text-slate-600">공유하기</span>
+        </button>
+      </div>
+    </section>
+
+    <!-- Featured Products -->
+    <section id="featured-section" class="py-16 px-5 reveal">
+      <div class="max-w-6xl mx-auto">
+        <div class="flex items-center justify-between mb-8">
+            <h2 class="text-xl md:text-2xl font-bold text-slate-900 flex items-center gap-2">
+                <span class="text-yellow-500">★</span> 오늘의 추천 상품
+            </h2>
+            <span class="text-xs text-slate-400 font-medium">사장님 강력추천 TOP 3</span>
+        </div>
+        <!-- 모바일 가로 스크롤 적용 -->
+        <div id="product-list" class="flex md:grid md:grid-cols-3 gap-6 overflow-x-auto snap-x snap-mandatory pb-4 hide-scrollbar">
+            <div class="min-w-[85%] md:min-w-0 snap-center h-80 skeleton rounded-2xl"></div>
+            <div class="min-w-[85%] md:min-w-0 snap-center h-80 skeleton rounded-2xl"></div>
+            <div class="min-w-[85%] md:min-w-0 snap-center h-80 skeleton rounded-2xl"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Blog Section -->
+    <section id="blog-section" class="py-12 px-5 bg-white reveal">
+        <div class="max-w-6xl mx-auto bg-slate-50 rounded-3xl shadow-none border border-slate-100 p-6 md:p-10">
+            <div class="flex justify-between items-end mb-8">
+                <div>
+                    <h3 class="text-xl font-bold text-slate-900 mb-1">대광 소식통</h3>
+                    <p class="text-slate-500 text-xs md:text-sm">싱싱한 현장 소식을 전해드립니다.</p>
+                </div>
+                <button onclick="window.navigate('blog-page')" class="text-xs text-slate-500 hover:text-theme flex items-center gap-1 bg-white border border-slate-200 px-4 py-2 rounded-full font-bold shadow-sm">전체보기 <i data-lucide="arrow-right" size="12"></i></button>
+            </div>
+            <div id="main-blog-list" class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <div class="skeleton h-64 lg:col-span-1"></div>
+                <div class="lg:col-span-2 flex flex-col gap-3"><div class="skeleton h-24"></div><div class="skeleton h-24"></div></div>
+            </div>
+        </div>
+    </section>
+  </div>
+
+  <!-- Menu Page -->
+  <section id="menu" data-page="menu" class="py-20 md:py-24 bg-slate-50 page-hidden min-h-screen">
+    <div class="px-5 pt-10 md:pt-0 content-container !bg-transparent !shadow-none !min-h-0">
+      <div class="flex flex-col md:flex-row md:justify-between md:items-end gap-6 mb-8 border-b border-slate-200 pb-6">
+        <div>
+          <h2 class="text-2xl md:text-3xl font-bold text-slate-900">전체 메뉴</h2>
+          <p class="text-slate-500 mt-2 text-sm">계절과 조업 상황에 따라 가격이 변동될 수 있습니다.</p>
+        </div>
+        <div id="menu-category-tabs" class="flex flex-wrap gap-2 w-full md:w-auto justify-start md:justify-end"></div>
+      </div>
+      
+      <!-- 오늘의 추천 (전체보기 시에만 노출) -->
+      <div id="menu-featured-container" class="mb-12 hidden reveal">
+          <div class="bg-gradient-to-br from-slate-900 to-slate-800 rounded-3xl p-8 shadow-xl relative overflow-hidden text-white">
+              <div class="absolute top-0 right-0 p-8 opacity-10 text-white"><i data-lucide="thumbs-up" size="140"></i></div>
+              <p class="text-base font-bold text-blue-200 mb-6 flex items-center gap-2 relative z-10"><span class="bg-blue-500 text-white text-[10px] px-2 py-0.5 rounded">TODAY</span> 오늘의 추천 상품 TOP 3</p>
+              <div id="menu-featured-list" class="flex md:grid md:grid-cols-3 gap-5 overflow-x-auto snap-x snap-mandatory pb-4 hide-scrollbar relative z-10"></div>
+          </div>
+      </div>
+
+      <div class="bg-white rounded-3xl shadow-sm overflow-hidden border border-slate-100 min-h-[400px]">
+        <div id="all-menu-list" class="divide-y divide-slate-50 p-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div class="col-span-full p-4 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+             <div class="skeleton h-48 rounded-xl"></div><div class="skeleton h-48 rounded-xl"></div><div class="skeleton h-48 rounded-xl"></div>
+          </div>
+        </div>
+        <div id="infinite-scroll-trigger" class="py-8 flex justify-center w-full">
+            <div class="loader-icon text-2xl animate-spin text-gray-300 hidden">C</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Blog List Page -->
+  <section id="blog-page" data-page="blog-page" class="py-20 md:py-24 bg-slate-50 page-hidden min-h-screen">
+      <div class="px-5 pt-10 md:pt-0 content-container !bg-transparent !shadow-none !min-h-0">
+          <h2 class="text-2xl md:text-3xl font-bold mb-8 text-slate-900">대광 소식통 전체보기</h2>
+          <div id="full-blog-list" class="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div class="skeleton h-80 rounded-2xl"></div><div class="skeleton h-80 rounded-2xl"></div>
+          </div>
+      </div>
+  </section>
+
+  <!-- Order Page -->
+  <section id="order" data-page="order" class="py-20 md:py-24 bg-white page-hidden min-h-screen">
+    <div class="px-5 pt-10 md:pt-0 content-container !bg-transparent !shadow-none !min-h-0">
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20">
+        <div class="space-y-10 order-2 lg:order-1 reveal">
+          <div>
+            <h2 class="text-2xl md:text-3xl font-bold mb-8 text-slate-900 editable-target" onclick="window.handleEdit('orderTitle', '주문안내 제목')" id="order-title-display">주문 및 결제 안내</h2>
+            <div class="space-y-6">
+              <div class="flex gap-5 items-start p-6 bg-slate-50 rounded-2xl border border-slate-100">
+                <div class="w-10 h-10 bg-white text-theme rounded-full flex items-center justify-center flex-shrink-0 shadow-sm border border-slate-100 font-bold text-lg">1</div>
+                <div><h4 class="font-bold text-lg mb-1">간편 주문 접수</h4><p class="text-slate-500 text-sm leading-relaxed">장바구니에 상품을 담거나, 주문서에 내용을 직접 입력하여 전송해주세요.</p></div>
+              </div>
+              <div class="flex gap-5 items-start p-6 bg-slate-50 rounded-2xl border border-slate-100">
+                  <div class="w-10 h-10 bg-white text-theme rounded-full flex items-center justify-center flex-shrink-0 shadow-sm border border-slate-100 font-bold text-lg">2</div>
+                  <div><h4 class="font-bold text-lg mb-1">입금 확인</h4><p class="text-slate-500 text-sm leading-relaxed">주문서 제출 후 안내된 계좌로 입금해주시면, 확인 문자를 발송해드립니다.</p></div>
+              </div>
+              <div class="flex gap-5 items-start p-6 bg-slate-50 rounded-2xl border border-slate-100">
+                  <div class="w-10 h-10 bg-white text-theme rounded-full flex items-center justify-center flex-shrink-0 shadow-sm border border-slate-100 font-bold text-lg">3</div>
+                  <div><h4 class="font-bold text-lg mb-1">신선 택배 발송</h4><p class="text-slate-500 text-sm leading-relaxed">오후 2시 이전 입금 시 당일 조업/포장하여 발송합니다. (익일 도착)</p></div>
+              </div>
+            </div>
+          </div>
+          <div class="bg-slate-900 text-white p-10 rounded-3xl relative overflow-hidden group shadow-2xl">
+            <div class="absolute top-0 right-0 p-10 opacity-5 transform translate-x-4 -translate-y-4 group-hover:scale-110 transition"><i data-lucide="credit-card" size="140"></i></div>
+            <h4 class="font-bold text-slate-400 mb-6 text-xs uppercase tracking-widest">Deposit Account</h4>
+            <div class="flex flex-col gap-3 relative z-10">
+              <div class="flex items-center gap-3">
+                  <span class="text-slate-400 text-sm w-16">예금주</span>
+                  <div onclick="window.handleEdit('bankOwner', '예금주')" class="editable-target hover:text-blue-200 transition font-bold text-xl" id="bank-owner-display">홍길동</div>
+              </div>
+              <div class="flex items-center gap-3">
+                  <span class="text-slate-400 text-sm w-16">은행명</span>
+                  <div onclick="window.handleEdit('bankName', '은행명')" class="editable-target hover:text-blue-200 transition text-lg" id="bank-name-display">농협</div>
+              </div>
+              <div class="flex items-center gap-3 mt-1">
+                  <div onclick="window.handleEdit('bankNumber', '계좌번호(숫자)')" class="editable-target hover:text-blue-200 transition font-mono text-2xl font-bold tracking-tight" id="bank-number-display">000-0000-0000-00</div>
+                  <button onclick="window.copyText(document.getElementById('bank-number-display').innerText)" class="bg-white/10 text-white p-2 rounded-lg hover:bg-white/20 transition backdrop-blur-sm"><i data-lucide="copy" size="16"></i></button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="bg-white p-8 md:p-10 rounded-3xl shadow-xl border border-slate-100 h-fit lg:sticky lg:top-24 order-1 lg:order-2 reveal" id="order-form">
+          <div id="order-form-container">
+            <div class="mb-8">
+              <span class="bg-blue-50 text-blue-600 text-xs font-bold px-3 py-1 rounded-full mb-3 inline-block">ONLINE ORDER</span>
+              <h3 class="text-2xl md:text-3xl font-bold text-slate-900 editable-target" onclick="window.handleEdit('orderFormTitle', '주문서 제목')" id="order-form-title-display">주문서 작성</h3>
+            </div>
+            <form id="orderForm" class="space-y-5">
+              <div><label class="block text-sm font-bold text-slate-700 mb-2">성함 (입금자명)</label><input type="text" id="order-name" required class="w-full px-5 py-3.5 rounded-xl bg-slate-50 border border-slate-200 focus:border-theme focus:bg-white transition outline-none" placeholder="홍길동"></div>
+              <div><label class="block text-sm font-bold text-slate-700 mb-2">연락처</label><input type="tel" id="order-phone" required pattern="[0-9]*" inputmode="numeric" class="w-full px-5 py-3.5 rounded-xl bg-slate-50 border border-slate-200 focus:border-theme focus:bg-white transition outline-none" placeholder="010-0000-0000 (숫자만)"></div>
+              <div><label class="block text-sm font-bold text-slate-700 mb-2">배송지 주소</label><input type="text" id="order-address" required class="w-full px-5 py-3.5 rounded-xl bg-slate-50 border border-slate-200 focus:border-theme focus:bg-white transition outline-none" placeholder="상세 주소까지 입력해주세요"></div>
+              <div><label class="block text-sm font-bold text-slate-700 mb-2">주문 내용</label><textarea id="order-product" required rows="4" class="w-full px-5 py-3.5 rounded-xl bg-slate-50 border border-slate-200 focus:border-theme focus:bg-white transition outline-none resize-none" placeholder="장바구니에서 [주문하기]를 누르면 자동 입력됩니다."></textarea></div>
+              <button type="submit" id="submitBtn" class="w-full bg-theme text-white py-4 rounded-xl font-bold text-lg hover:opacity-90 transition shadow-lg shadow-slate-300 transform active:scale-95 mt-4">주문 전송하기</button>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 1:1 Inquiry Page -->
+  <section id="inquiry" data-page="inquiry" class="py-20 md:py-24 bg-gray-50 page-hidden min-h-screen">
+    <div class="px-5 pt-10 md:pt-0 content-container !bg-transparent !shadow-none !min-h-0">
+      <div class="max-w-xl mx-auto">
+          <div class="text-center mb-12">
+              <h2 class="text-2xl md:text-3xl font-bold text-slate-900 mb-3">1:1 문의하기</h2>
+              <p class="text-slate-500 text-sm">궁금한 점을 남겨주시면 친절하게 답변해 드립니다.</p>
+          </div>
+          
+          <div class="bg-white rounded-3xl shadow-xl p-8 md:p-10 border border-slate-100 reveal">
+            <h3 class="font-bold text-xl mb-8 flex items-center gap-2 text-slate-800"><i data-lucide="edit-3"></i> 새 문의 작성</h3>
+            <form id="inquiryForm" class="space-y-4">
+                <input type="text" id="inq-name" required class="w-full px-5 py-3.5 border border-slate-200 rounded-xl bg-slate-50 outline-none focus:border-theme focus:bg-white transition" placeholder="성함">
+                <input type="tel" id="inq-phone" required pattern="[0-9]*" inputmode="numeric" class="w-full px-5 py-3.5 border border-slate-200 rounded-xl bg-slate-50 outline-none focus:border-theme focus:bg-white transition" placeholder="연락처 (숫자만)">
+                <textarea id="inq-content" required rows="5" class="w-full px-5 py-3.5 border border-slate-200 rounded-xl bg-slate-50 outline-none focus:border-theme focus:bg-white transition resize-none" placeholder="문의하실 내용을 남겨주세요."></textarea>
+                <button type="submit" class="w-full bg-theme text-white py-4 rounded-xl font-bold shadow-lg hover:opacity-90 transition transform active:scale-95 mt-2">문의 등록하기</button>
+            </form>
+            <div class="mt-8 pt-6 border-t border-slate-100 text-center">
+                <button onclick="window.openInquirySearch()" class="text-slate-500 underline text-sm hover:text-theme font-medium">내가 쓴 문의 내역 조회하기</button>
+            </div>
+          </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Location Page -->
+  <section id="location" data-page="location" class="py-20 md:py-24 bg-gray-50 page-hidden min-h-screen">
+    <div class="px-5 pt-10 md:pt-0 content-container !bg-transparent !shadow-none !min-h-0">
+      <h2 class="text-2xl md:text-3xl font-bold mb-8 text-slate-900 text-center">매장 오시는 길</h2>
+      <div class="max-w-4xl mx-auto bg-white p-5 rounded-3xl shadow-sm reveal">
+        <div class="w-full h-[400px] md:h-[500px] bg-slate-200 rounded-2xl overflow-hidden relative group">
+          <iframe id="map-iframe" width="100%" height="100%" style="border:0;" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
+        </div>
+        <div class="mt-8 text-center space-y-3 pb-4">
+            <div class="inline-flex items-center gap-2 text-theme font-bold bg-slate-100 px-4 py-1.5 rounded-full mb-2 text-sm"><i data-lucide="map-pin" size="14"></i> ADDRESS</div>
+            <p id="address-display" class="text-xl md:text-2xl font-bold text-slate-900 editable-target" onclick="window.handleEdit('address', '매장 주소')">서울 노량진 수산시장 1층 100호</p>
+            <p class="text-slate-500">주차 가능 / 포장 가능</p>
+            <p class="text-xs text-slate-300 mt-4 admin-only">* 관리자 모드에서 주소를 수정하면 지도가 자동 업데이트됩니다.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="bg-slate-900 text-slate-400 py-16 md:py-20 text-sm border-t border-slate-800 mb-16 md:mb-0">
+    <div class="px-5 content-container !bg-transparent !shadow-none !min-h-0">
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-10 md:gap-12 mb-16">
+        <div class="col-span-1 md:col-span-2">
+          <h5 class="text-white text-2xl font-bold mb-6 flex items-center gap-2 editable-target" onclick="window.handleEdit('storeName', '상호명')"><span id="footer-logo-text">대광수산</span></h5>
+          <div class="space-y-3">
+            <p class="editable-target leading-relaxed" onclick="window.handleEdit('footerDesc', '푸터 소개글')" id="footer-desc">신선함이 살아있는 프리미엄 수산물 마켓입니다.<br>최고의 품질로 보답하겠습니다.</p>
+            <div class="flex gap-4 mt-8">
+              <a href="tel:010-6524-0520" id="footer-call" class="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center hover:bg-theme hover:text-white transition"><i data-lucide="phone" size="18"></i></a>
+              <a href="sms:010-6524-0520" id="footer-sms" class="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center hover:bg-theme hover:text-white transition"><i data-lucide="message-square" size="18"></i></a>
+              <button onclick="window.shareSite()" class="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center hover:bg-theme hover:text-white transition"><i data-lucide="share-2" size="18"></i></button>
+            </div>
+          </div>
+        </div>
+        <div>
+          <h6 class="text-white font-bold mb-5 uppercase tracking-widest text-xs">Customer Center</h6>
+          <p class="text-2xl text-white font-bold mb-3 editable-target" onclick="window.handleEdit('csPhone', '고객센터 번호')" id="cs-phone">010-6524-0520</p>
+          <div class="editable-target space-y-1 text-slate-400" onclick="window.handleEdit('bizHours', '운영시간')" id="biz-hours">
+            <p>평일 09:00 - 18:00</p>
+            <p>점심 12:00 - 13:00</p>
+            <p>주말 및 공휴일 휴무</p>
+          </div>
+        </div>
+        <div>
+          <h6 class="text-white font-bold mb-5 uppercase tracking-widest text-xs">Company Info</h6>
+          <div class="space-y-2.5 text-xs text-slate-500">
+            <p class="flex justify-between"><span class="">대표자</span> <span class="editable-target text-slate-400" onclick="window.handleEdit('ownerName', '대표자명')" id="owner-name">홍길동</span></p>
+            <p class="flex justify-between"><span class="">사업자번호</span> <span class="editable-target text-slate-400" onclick="window.handleEdit('bizNum', '사업자번호')" id="biz-num">000-00-00000</span></p>
+            <p class="flex justify-between"><span class="">이메일</span> <span class="editable-target text-slate-400" onclick="window.handleEdit('email', '이메일')" id="email-addr">help@market.com</span></p>
+          </div>
+        </div>
+      </div>
+      <div class="border-t border-slate-800 pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
+        <p class="text-slate-500">&copy; 2024 <span id="copyright-name">대광수산</span>. All rights reserved.</p>
+        <div class="flex gap-4 text-xs"><button onclick="window.openLoginModal()" class="hover:text-white underline transition">Admin Login</button></div>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Admin Controls (FAB) - Fixed Positioning -->
+  <div class="fab-container admin-only">
+    <div onclick="window.openAdminDashboard()" id="fab-main" class="fab-main-btn"><i data-lucide="layout-dashboard" size="24"></i></div>
+  </div>
+
+  <!-- [NEW] ALL-IN-ONE ADMIN DASHBOARD (Master Mode) -->
+  <div id="admin-dashboard" class="fixed inset-0 z-[200] hidden flex flex-col font-sans">
+    
+    <!-- Admin Top Header -->
+    <header class="bg-white border-b border-slate-200 h-16 flex items-center justify-between px-6 z-30 shrink-0">
+        <div class="flex items-center gap-4">
+            <button onclick="window.toggleAdminSidebar()" class="md:hidden text-slate-500 p-2 hover:bg-slate-50 rounded-lg"><i data-lucide="menu"></i></button>
+            <div class="flex items-center gap-3">
+                 <div class="w-8 h-8 bg-slate-900 rounded-lg flex items-center justify-center text-white font-bold text-sm shadow-md">M</div>
+                 <h2 class="text-lg font-bold text-slate-800 tracking-tight">Master Console</h2>
+            </div>
+        </div>
+        <div class="flex items-center gap-3">
+             <span class="text-xs font-medium text-slate-400 hidden md:inline">Logged in as Master</span>
+             <div class="h-4 w-[1px] bg-slate-200 mx-2 hidden md:block"></div>
+             <button onclick="window.closeAdminDashboard()" class="text-xs font-bold text-slate-500 hover:text-blue-600 flex items-center gap-2 bg-slate-50 px-3 py-2 rounded-lg border border-slate-200 transition hover:border-blue-200"><i data-lucide="monitor" size="14"></i> 사이트 보기</button>
+        </div>
+    </header>
+
+    <div class="flex flex-1 overflow-hidden relative">
+        <!-- Sidebar (Dark Mode) -->
+        <aside id="admin-sidebar" class="admin-sidebar w-64 flex flex-col absolute md:relative inset-y-0 left-0 transform -translate-x-full md:translate-x-0 transition-transform duration-300 z-20 h-full pt-4">
+            <nav class="flex-1 overflow-y-auto px-2">
+                <div class="admin-sidebar-section">Overview</div>
+                <div onclick="window.showAdminTab('home')" class="admin-sidebar-item active" id="menu-home"><i data-lucide="pie-chart"></i> 대시보드</div>
+                
+                <div class="admin-sidebar-section">Management</div>
+                <div onclick="window.showAdminTab('orders')" class="admin-sidebar-item" id="menu-orders"><i data-lucide="shopping-cart"></i> 주문 관리</div>
+                <div onclick="window.showAdminTab('products')" class="admin-sidebar-item" id="menu-products"><i data-lucide="package"></i> 상품 관리</div>
+                
+                <div class="admin-sidebar-section">Customer</div>
+                <div onclick="window.showAdminTab('inquiries')" class="admin-sidebar-item" id="menu-inquiries"><i data-lucide="message-square"></i> 1:1 문의</div>
+                <div onclick="window.showAdminTab('notices')" class="admin-sidebar-item" id="menu-notices"><i data-lucide="megaphone"></i> 공지사항</div>
+                
+                <div class="admin-sidebar-section">System</div>
+                <div onclick="window.showAdminTab('settings')" class="admin-sidebar-item" id="menu-settings"><i data-lucide="settings"></i> 설정</div>
+            </nav>
+            <div class="p-4 border-t border-slate-800/50 bg-slate-900">
+                <button onclick="window.exitAdminMode()" class="w-full bg-slate-800 text-slate-300 hover:bg-red-500/10 hover:text-red-400 py-3 rounded-lg text-sm font-bold flex items-center justify-center gap-2 transition"><i data-lucide="log-out" size="16"></i> 로그아웃</button>
+            </div>
+        </aside>
+        <div id="admin-sidebar-overlay" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-10 hidden md:hidden" onclick="window.toggleAdminSidebar()"></div>
+
+        <!-- Main Content Area -->
+        <main class="flex-1 overflow-y-auto p-6 md:p-10 relative scroll-smooth">
+            
+            <!-- 1. Dashboard Home -->
+            <div id="admin-home" class="admin-tab-content max-w-7xl mx-auto">
+                <div class="mb-8">
+                    <h3 class="text-2xl font-bold text-slate-800">오늘의 요약</h3>
+                    <p class="text-slate-500 text-sm mt-1">실시간 스토어 현황입니다.</p>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                    <!-- Cards -->
+                    <div class="admin-card">
+                        <div class="flex justify-between items-start mb-4">
+                            <div class="w-10 h-10 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center"><i data-lucide="shopping-bag"></i></div>
+                            <span class="saas-badge saas-badge-blue">Live</span>
+                        </div>
+                        <div class="text-slate-400 text-xs font-bold uppercase tracking-wider">신규 주문</div>
+                        <div class="text-3xl font-extrabold text-slate-800 mt-2" id="dash-new-orders">-</div>
+                    </div>
+                    <div class="admin-card">
+                        <div class="flex justify-between items-start mb-4">
+                            <div class="w-10 h-10 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center"><i data-lucide="package"></i></div>
+                        </div>
+                        <div class="text-slate-400 text-xs font-bold uppercase tracking-wider">총 상품수</div>
+                        <div class="text-3xl font-extrabold text-slate-800 mt-2" id="dash-total-products">-</div>
+                    </div>
+                    <div class="admin-card">
+                        <div class="flex justify-between items-start mb-4">
+                            <div class="w-10 h-10 rounded-lg bg-orange-50 text-orange-600 flex items-center justify-center"><i data-lucide="help-circle"></i></div>
+                            <span class="saas-badge saas-badge-red">Action</span>
+                        </div>
+                        <div class="text-slate-400 text-xs font-bold uppercase tracking-wider">답변 대기</div>
+                        <div class="text-3xl font-extrabold text-slate-800 mt-2" id="dash-pending-inquiries">-</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 2. Orders -->
+            <div id="admin-orders" class="admin-tab-content hidden max-w-7xl mx-auto">
+                <div class="flex flex-col md:flex-row justify-between items-end mb-6 gap-4">
+                    <div>
+                        <h3 class="text-2xl font-bold text-slate-800">주문 내역</h3>
+                        <p class="text-slate-500 text-sm mt-1">접수된 주문을 관리하고 상태를 변경하세요.</p>
+                    </div>
+                    <div class="flex gap-3 w-full md:w-auto">
+                        <div class="relative flex-1 md:w-64">
+                            <i data-lucide="search" class="absolute left-3 top-3.5 text-slate-400 w-4 h-4"></i>
+                            <input type="text" placeholder="주문자명, 전화번호 검색" class="saas-search-input">
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="admin-table-container">
+                    <table class="w-full">
+                        <thead class="hidden md:table-header-group">
+                            <tr><th class="admin-table-th">접수일시</th><th class="admin-table-th">주문자</th><th class="admin-table-th">배송지</th><th class="admin-table-th">상품목록</th><th class="admin-table-th">상태</th><th class="admin-table-th text-right">관리</th></tr>
+                        </thead>
+                        <tbody id="admin-order-list" class="divide-y divide-slate-100"></tbody>
+                    </table>
+                    <div id="admin-orders-loading" class="p-12 flex justify-center hidden"><div class="loader-icon text-2xl animate-spin text-blue-600">C</div></div>
+                    <div class="p-4 border-t border-slate-100 flex justify-center bg-slate-50">
+                        <button id="btn-load-more-orders" onclick="window.loadMoreOrders()" class="text-sm text-slate-500 font-bold hover:text-slate-800 hidden">더 보기 +</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 3. Products -->
+            <div id="admin-products" class="admin-tab-content hidden max-w-7xl mx-auto">
+                <div class="flex flex-col md:flex-row justify-between items-end mb-6 gap-4">
+                    <div>
+                        <h3 class="text-2xl font-bold text-slate-800">상품 관리</h3>
+                        <p class="text-slate-500 text-sm mt-1">쇼핑몰에 진열될 상품을 등록하고 수정합니다.</p>
+                    </div>
+                    <button onclick="window.openProductModal()" class="saas-btn-primary"><i data-lucide="plus" size="16"></i> 상품 등록</button>
+                </div>
+                
+                <div class="admin-table-container">
+                    <table class="w-full">
+                        <thead class="hidden md:table-header-group">
+                            <tr><th class="admin-table-th">상품</th><th class="admin-table-th">정보</th><th class="admin-table-th">카테고리</th><th class="admin-table-th">가격</th><th class="admin-table-th">상태</th><th class="admin-table-th text-right">관리</th></tr>
+                        </thead>
+                        <tbody id="admin-product-list" class="divide-y divide-slate-100"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- 4. Inquiries -->
+            <div id="admin-inquiries" class="admin-tab-content hidden max-w-7xl mx-auto">
+                <div class="mb-6">
+                    <h3 class="text-2xl font-bold text-slate-800">1:1 문의</h3>
+                    <p class="text-slate-500 text-sm mt-1">고객님의 소중한 문의 내역입니다.</p>
+                </div>
+                <div class="admin-table-container min-h-[500px]">
+                    <div id="admin-inquiry-list" class="divide-y divide-slate-100"></div>
+                </div>
+            </div>
+
+            <!-- 5. Notices -->
+            <div id="admin-notices" class="admin-tab-content hidden max-w-7xl mx-auto">
+                <div class="flex justify-between items-center mb-6">
+                    <div>
+                        <h3 class="text-2xl font-bold text-slate-800">공지사항</h3>
+                        <p class="text-slate-500 text-sm mt-1">쇼핑몰 공지 및 이벤트를 관리하세요.</p>
+                    </div>
+                    <button onclick="window.openNoticeEditor()" class="saas-btn-primary"><i data-lucide="edit"></i> 공지 작성</button>
+                </div>
+                <div class="admin-table-container min-h-[500px]">
+                    <div id="admin-notice-list" class="divide-y divide-slate-100"></div>
+                </div>
+            </div>
+
+            <!-- 6. Settings -->
+            <div id="admin-settings" class="admin-tab-content hidden max-w-4xl mx-auto">
+                <div class="mb-8">
+                    <h3 class="text-2xl font-bold text-slate-800">설정</h3>
+                    <p class="text-slate-500 text-sm mt-1">사이트 기본 정보 및 결제 계좌를 설정합니다.</p>
+                </div>
+                <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-8">
+                    <form id="admin-settings-form" class="space-y-8">
+                        <div>
+                            <label class="block text-sm font-bold text-slate-700 mb-2">상호명</label>
+                            <input type="text" name="storeName" class="saas-search-input bg-slate-50">
+                        </div>
+                        <div class="grid grid-cols-2 gap-6">
+                            <div><label class="block text-sm font-bold text-slate-700 mb-2">대표자명</label><input type="text" name="ownerName" class="saas-search-input bg-slate-50"></div>
+                            <div><label class="block text-sm font-bold text-slate-700 mb-2">사업자번호</label><input type="text" name="bizNum" class="saas-search-input bg-slate-50"></div>
+                        </div>
+                        <div><label class="block text-sm font-bold text-slate-700 mb-2">고객센터 번호</label><input type="text" name="csPhone" class="saas-search-input bg-slate-50"></div>
+                        <div><label class="block text-sm font-bold text-slate-700 mb-2">매장 주소</label><input type="text" name="address" class="saas-search-input bg-slate-50"></div>
+                        
+                        <div class="bg-blue-50/50 p-6 rounded-xl border border-blue-100">
+                            <label class="block text-sm font-bold text-blue-700 mb-4 flex items-center gap-2"><i data-lucide="credit-card" size="16"></i> 무통장 입금 계좌 설정</label>
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                <input type="text" name="bankName" placeholder="은행명" class="saas-search-input bg-white">
+                                <input type="text" name="bankNumber" placeholder="계좌번호" class="saas-search-input bg-white">
+                                <input type="text" name="bankOwner" placeholder="예금주" class="saas-search-input bg-white">
+                            </div>
+                        </div>
+                        <div class="pt-4 border-t border-slate-100">
+                            <button type="button" onclick="window.saveAdminSettings()" class="w-full bg-blue-600 text-white py-4 rounded-xl font-bold hover:bg-blue-700 transition shadow-lg shadow-blue-200">설정 저장하기</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </main>
+    </div>
+  </div>
+
+  <!-- Modals -->
+  <!-- Login Modal -->
+  <div id="login-modal" class="modal-overlay hidden">
+    <div class="bg-white rounded-2xl w-full max-w-xs p-8 shadow-2xl">
+      <div class="text-center mb-6">
+          <div class="w-12 h-12 bg-blue-100 text-blue-600 rounded-xl flex items-center justify-center mx-auto mb-4"><i data-lucide="lock"></i></div>
+          <h3 class="text-xl font-bold">Admin Login</h3>
+      </div>
+      <div class="space-y-3">
+        <input type="email" id="admin-id" placeholder="ID" class="w-full p-3 border rounded-xl outline-none focus:border-blue-500 bg-slate-50 transition">
+        <input type="password" id="admin-pw" placeholder="Password" class="w-full p-3 border rounded-xl outline-none focus:border-blue-500 bg-slate-50 transition">
+        <button onclick="window.tryLogin()" class="w-full bg-slate-900 text-white py-3 rounded-xl font-bold hover:opacity-90 shadow-lg mt-2">로그인</button>
+        <button onclick="document.getElementById('login-modal').classList.add('hidden')" class="w-full py-2 text-slate-400 text-xs hover:text-slate-600">닫기</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Notice List Modal (User View) -->
+  <div id="notice-list-modal" class="modal-overlay hidden">
+      <div class="bg-white rounded-2xl w-full max-w-md p-6 shadow-2xl relative max-h-[80vh] flex flex-col">
+          <button onclick="document.getElementById('notice-list-modal').classList.add('hidden')" class="absolute top-3 right-3 p-1 hover:bg-slate-100 rounded-full"><i data-lucide="x"></i></button>
+          <h3 class="text-xl font-bold mb-4 flex items-center gap-2"><i data-lucide="megaphone" class="text-theme"></i> 공지사항 목록</h3>
+          <div id="notice-full-list" class="space-y-3 flex-1 overflow-y-auto custom-scrollbar"></div>
+      </div>
+  </div>
+
+  <!-- Notice Detail Popup -->
+  <div id="notice-popup-modal" class="modal-overlay hidden">
+      <div class="bg-white rounded-2xl w-full max-w-sm overflow-hidden shadow-2xl relative flex flex-col">
+          <div class="bg-slate-900 text-white p-4 flex justify-between items-center">
+              <h3 class="font-bold flex items-center gap-2"><i data-lucide="bell" size="18"></i> 알림</h3>
+              <button onclick="document.getElementById('notice-popup-modal').classList.add('hidden')" class="hover:bg-slate-700 rounded-full p-1"><i data-lucide="x" size="18"></i></button>
+          </div>
+          <div class="p-6">
+              <h4 class="font-bold text-lg mb-3 text-slate-900 border-b pb-2" id="notice-popup-title"></h4>
+              <p class="text-sm text-slate-600 whitespace-pre-wrap leading-relaxed min-h-[50px]" id="notice-popup-content"></p>
+          </div>
+          <div class="p-4 bg-slate-50 text-center">
+              <button onclick="document.getElementById('notice-popup-modal').classList.add('hidden')" class="text-sm text-slate-500 font-bold hover:text-slate-800">닫기</button>
+          </div>
+      </div>
+  </div>
+
+  <!-- Common Editor Modal -->
+  <div id="editor-modal" class="modal-overlay hidden z-[300]">
+    <div class="bg-white rounded-2xl w-full max-w-md p-6 shadow-2xl max-h-[90vh] overflow-y-auto">
+      <h3 class="text-xl font-bold mb-4" id="editor-title">정보 관리</h3>
+      <input type="hidden" id="editor-id">
+      <input type="hidden" id="editor-type">
+      <div id="editor-fields" class="grid grid-cols-2 gap-3 mb-6"></div>
+      <div class="flex gap-2">
+        <button onclick="document.getElementById('editor-modal').classList.add('hidden')" class="flex-1 py-3 bg-slate-100 rounded-lg hover:bg-slate-200 font-bold text-slate-600">취소</button>
+        <button onclick="window.saveEditor()" class="flex-1 py-3 bg-blue-600 text-white rounded-lg font-bold hover:bg-blue-700 shadow-md">저장</button>
+      </div>
+      <button id="editor-delete-btn" onclick="window.deleteItem()" class="w-full mt-4 text-red-500 text-sm hidden font-bold hover:bg-red-50 p-3 rounded-lg">삭제하기</button>
+    </div>
+  </div>
+
+  <!-- Blog Detail Modal -->
+  <div id="blog-modal" class="modal-overlay hidden z-[250]">
+    <div class="bg-white rounded-3xl w-full max-w-4xl max-h-[90vh] overflow-y-auto relative flex flex-col md:flex-row overflow-hidden shadow-2xl">
+        <button id="blog-hide-btn" onclick="window.toggleBlogVisibility()" class="admin-only absolute top-4 right-16 bg-slate-100 px-3 py-1 rounded text-xs font-bold z-20">숨기기/보이기</button>
+        <button onclick="document.getElementById('blog-modal').classList.add('hidden')" class="absolute top-4 right-4 p-2 bg-black/10 hover:bg-black/20 rounded-full z-20 text-white"><i data-lucide="x"></i></button>
+        
+        <div id="blog-detail-img-container" class="md:w-1/2 h-64 md:h-auto bg-slate-100 relative"></div>
+        <div class="md:w-1/2 p-8 md:p-10 flex flex-col h-full overflow-y-auto">
+            <div id="blog-detail-text-content" class="flex-1 mb-8"></div>
+            
+            <div class="pt-6 border-t border-slate-100">
+                <h4 class="font-bold mb-4 flex items-center gap-2"><i data-lucide="message-circle" size="18"></i> 댓글 (<span id="blog-comment-count">0</span>)</h4>
+                <div id="blog-comments" class="space-y-3 mb-6 max-h-40 overflow-y-auto custom-scrollbar"></div>
+                <div class="flex gap-2">
+                    <input type="text" id="comment-input" placeholder="댓글을 입력하세요" class="flex-1 bg-slate-50 border border-slate-200 p-3 rounded-xl outline-none focus:border-theme">
+                    <button onclick="window.addComment()" class="bg-slate-900 text-white px-5 rounded-xl font-bold">등록</button>
+                </div>
+            </div>
+        </div>
+    </div>
+  </div>
+
+  <!-- Inquiry Search Modal -->
+  <div id="inquiry-search-modal" class="modal-overlay hidden">
+      <div class="bg-white rounded-3xl w-full max-w-md p-6 shadow-2xl">
+          <div class="flex justify-between items-center mb-6">
+              <h3 class="font-bold text-lg flex items-center gap-2"><i data-lucide="search"></i> 내 문의 조회</h3>
+              <button onclick="document.getElementById('inquiry-search-modal').classList.add('hidden')" class="p-1 hover:bg-slate-100 rounded-full"><i data-lucide="x"></i></button>
+          </div>
+          <div class="space-y-3 mb-6">
+              <input type="text" id="search-name" placeholder="작성자 성함" class="w-full px-4 py-3 border rounded-xl bg-slate-50 outline-none focus:border-theme">
+              <input type="tel" id="search-phone" placeholder="연락처 (숫자만)" class="w-full px-4 py-3 border rounded-xl bg-slate-50 outline-none focus:border-theme">
+              <button onclick="window.searchInquiries()" class="w-full bg-theme text-white py-3 rounded-xl font-bold">조회하기</button>
+          </div>
+          <div id="search-result-area" class="hidden">
+              <h4 class="text-sm font-bold text-slate-500 mb-2">조회 결과</h4>
+              <div id="inquiry-list" class="space-y-2 max-h-[300px] overflow-y-auto custom-scrollbar"></div>
+          </div>
+      </div>
+  </div>
+
+  <!-- Inquiry Detail Modal -->
+  <div id="inquiry-detail-modal" class="modal-overlay hidden z-[300]">
+    <div class="bg-white rounded-2xl w-full max-w-md p-6 shadow-2xl relative">
+        <button onclick="document.getElementById('inquiry-detail-modal').classList.add('hidden')" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600"><i data-lucide="x"></i></button>
+        <div id="inquiry-detail-content"></div>
+    </div>
+  </div>
+
+  <!-- Order Success Modal -->
+  <div id="order-success-modal" class="modal-overlay hidden">
+      <div class="bg-white rounded-3xl w-full max-w-sm p-8 text-center shadow-2xl transform transition-all scale-100">
+          <div class="w-20 h-20 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-6 animate-bounce">
+              <i data-lucide="check" size="40"></i>
+          </div>
+          <h3 class="text-2xl font-bold text-slate-900 mb-2">주문이 접수되었습니다!</h3>
+          <p class="text-slate-500 text-sm mb-8 leading-relaxed">작성하신 연락처로 입금 확인 문자를<br>발송해 드릴 예정입니다.</p>
+          <button onclick="document.getElementById('order-success-modal').classList.add('hidden')" class="w-full bg-theme text-white py-3 rounded-xl font-bold text-lg hover:opacity-90 shadow-lg">확인</button>
+      </div>
+  </div>
+
+  <!-- Mobile Nav (5 items) -->
+  <nav class="fixed bottom-0 left-0 w-full bg-white/95 backdrop-blur border-t border-slate-200 flex justify-around py-1.5 md:hidden z-[80] pb-safe shadow-[0_-4px_20px_rgba(0,0,0,0.03)]">
+    <button onclick="window.navigate('main')" class="mobile-nav-btn flex flex-col items-center gap-0.5 p-1 w-full" data-mobile-nav="main"><i data-lucide="home" size="22"></i> <span class="text-[10px] font-bold mt-1">홈</span></button>
+    <button onclick="window.navigate('menu')" class="mobile-nav-btn flex flex-col items-center gap-0.5 p-1 w-full" data-mobile-nav="menu">
+      <i data-lucide="utensils-crossed" size="22"></i>
+      <span class="text-[10px] font-bold mt-1">메뉴</span>
+    </button>
+    <button onclick="window.navigate('order')" class="mobile-nav-btn flex flex-col items-center gap-0.5 p-1 w-full" data-mobile-nav="order"><i data-lucide="clipboard-list" size="22"></i> <span class="text-[10px] font-bold mt-1">주문</span></button>
+    <button onclick="window.navigate('inquiry')" class="mobile-nav-btn flex flex-col items-center gap-0.5 p-1 w-full" data-mobile-nav="inquiry"><i data-lucide="message-circle" size="22"></i> <span class="text-[10px] font-bold mt-1">문의</span></button>
+    <button onclick="window.navigate('location')" class="mobile-nav-btn flex flex-col items-center gap-0.5 p-1 w-full" data-mobile-nav="location"><i data-lucide="map-pin" size="22"></i> <span class="text-[10px] font-bold mt-1">주소</span></button>
+  </nav>
+
+  <!-- Cart Sidebar -->
+  <div id="cart-sidebar" class="fixed inset-y-0 right-0 w-full max-w-sm bg-white shadow-2xl z-[90] transform translate-x-full transition-transform duration-300 flex flex-col">
+    <div class="p-5 border-b flex justify-between items-center bg-slate-50">
+      <h3 class="font-bold text-lg flex items-center gap-2"><i data-lucide="shopping-bag" class="text-theme"></i> 장바구니</h3>
+      <div class="flex gap-2">
+        <button onclick="window.clearCart()" class="text-slate-400 hover:text-red-500 p-1 transition" title="장바구니 비우기"><i data-lucide="trash"></i></button>
+        <button onclick="window.toggleCart()" class="text-slate-400 hover:text-slate-600 transition"><i data-lucide="x"></i></button>
+      </div>
+    </div>
+    <div class="flex-1 overflow-y-auto p-5" id="cart-items"></div>
+    <div class="p-5 border-t bg-slate-50 pb-8 md:pb-5"><div class="flex justify-between font-bold text-lg mb-4"><span>총 결제금액</span><span class="text-theme" id="cart-total">0원</span></div><button onclick="window.checkout()" class="w-full bg-theme text-white py-4 rounded-xl font-bold hover:opacity-90 transition shadow-lg">주문하기</button></div>
+  </div>
+  <div id="cart-overlay" onclick="window.toggleCart()" class="fixed inset-0 bg-black/50 z-[85] hidden transition-opacity backdrop-blur-sm"></div>
+
+  
+<script type="module" src="./assets/js/app.js"></script>
+</body>
+</html>

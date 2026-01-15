@@ -1,0 +1,317 @@
+:root { 
+    --theme-color: #0f172a; 
+    --theme-accent: #3b82f6;
+    
+    /* 관리자 페이지 전용 색상 변수 */
+    --admin-bg: #f1f5f9; 
+    --admin-sidebar: #0f172a; 
+    --admin-text-main: #334155;
+    --admin-text-sub: #64748b;
+}
+
+body { 
+    font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, Roboto, sans-serif; 
+    scroll-behavior: smooth; 
+    -webkit-tap-highlight-color: transparent; 
+    background-color: #f8fafc; /* Ice White Tone */
+    color: #1e293b;
+    letter-spacing: -0.015em; 
+    line-height: 1.6;
+}
+
+/* 유틸리티 클래스 */
+.text-theme { color: var(--theme-color) !important; }
+.bg-theme { background-color: var(--theme-color) !important; }
+.border-theme { border-color: var(--theme-color) !important; }
+.hover-bg-theme:hover { background-color: var(--theme-color) !important; }
+.qty-display { color: #0f172a !important; font-weight: 800; font-size: 0.95rem; }
+
+/* 버튼 클릭 효과 (타격감) */
+button:active, .btn-active:active { transform: scale(0.96); transition: transform 0.1s ease-in-out; }
+
+/* 스크롤 애니메이션 (Scroll Reveal) */
+.reveal { opacity: 0; transform: translateY(20px); transition: all 0.6s cubic-bezier(0.16, 1, 0.3, 1); }
+.reveal.active { opacity: 1; transform: translateY(0); }
+
+/* PC 레이아웃 제한 (중앙 정렬) */
+.content-container { max-width: 1024px; margin: 0 auto; background-color: #fff; min-height: 100vh; box-shadow: 0 0 50px rgba(0,0,0,0.03); }
+
+
+/* =========================================
+   2. SHOPPING MALL UI (고객용 화면)
+   ========================================= */
+
+/* 히어로 섹션 (메인 배너) */
+.hero-bg {
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    transition: background-image 0.5s ease;
+}
+.hero-overlay {
+    background: linear-gradient(to bottom, rgba(15, 23, 42, 0.2) 0%, rgba(15, 23, 42, 0.6) 100%);
+}
+
+/* 로딩 스크린 */
+#app-loader {
+    position: fixed; inset: 0; background: #f8fafc; z-index: 9999;
+    display: flex; flex-direction: column; justify-content: center; align-items: center;
+    transition: opacity 0.4s ease-out, visibility 0.4s;
+}
+.loader-icon { font-size: 3rem; animation: float 2s ease-in-out infinite; }
+@keyframes float { 0%,100%{transform:translateY(0);} 50%{transform:translateY(-10px);} }
+.loader-hidden { opacity: 0; visibility: hidden; pointer-events: none; }
+
+/* 스켈레톤 UI (로딩 중 뼈대) */
+.skeleton { background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%); background-size: 200% 100%; animation: skeleton-loading 1.5s infinite; border-radius: 8px; }
+@keyframes skeleton-loading { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+
+/* 고급 플로팅 액션 메뉴 (우측 고정) */
+.floating-action-menu {
+    position: fixed; right: 24px; bottom: 24px; z-index: 90;
+    display: flex; flex-direction: column; gap: 14px;
+}
+.floating-btn {
+    position: relative; width: 56px; height: 56px; border-radius: 50%; display: flex;
+    align-items: center; justify-content: center;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.15), 0 2px 8px rgba(0,0,0,0.1);
+    transition: all 0.3s cubic-bezier(0.16,1,0.3,1); cursor: pointer; border: none;
+    backdrop-filter: blur(8px); overflow: visible;
+}
+.floating-btn:hover { transform: translateY(-4px) scale(1.05); box-shadow: 0 12px 32px rgba(0,0,0,0.2), 0 4px 12px rgba(0,0,0,0.15); }
+.floating-btn:active { transform: translateY(-2px) scale(1.02); }
+.floating-btn-icon { color: white; display: flex; align-items: center; justify-content: center; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1)); }
+.floating-btn-call { background: linear-gradient(135deg, #10b981 0%, #059669 100%); }
+.floating-btn-call:hover { background: linear-gradient(135deg, #059669 0%, #047857 100%); }
+.floating-btn-sms { background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); }
+.floating-btn-sms:hover { background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%); }
+.floating-btn-share { background: linear-gradient(135deg, #a855f7 0%, #9333ea 100%); }
+.floating-btn-share:hover { background: linear-gradient(135deg, #9333ea 0%, #7e22ce 100%); }
+.floating-btn-top { background: linear-gradient(135deg, #64748b 0%, #475569 100%); }
+.floating-btn-top:hover { background: linear-gradient(135deg, #475569 0%, #334155 100%); }
+.floating-btn-tooltip {
+    position: absolute; right: calc(100% + 16px); top: 50%;
+    transform: translateY(-50%) translateX(8px);
+    background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+    color: white; font-size: 13px; font-weight: 700; padding: 10px 16px;
+    border-radius: 12px; white-space: nowrap; opacity: 0; pointer-events: none;
+    transition: all 0.3s cubic-bezier(0.16,1,0.3,1);
+    box-shadow: 0 8px 20px rgba(0,0,0,0.25); letter-spacing: -0.3px;
+}
+.floating-btn-tooltip-arrow {
+    position: absolute; left: 100%; top: 50%; transform: translateY(-50%);
+    width: 0; height: 0; border-style: solid; border-width: 6px 0 6px 8px;
+    border-color: transparent transparent transparent #0f172a;
+}
+.floating-btn:hover .floating-btn-tooltip {
+    opacity: 1; transform: translateY(-50%) translateX(0);
+}
+@media (max-width: 1300px) { .floating-action-menu { right: 16px; bottom: 88px; } }
+
+/* 장바구니 뱃지 애니메이션 */
+@keyframes bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
+.cart-bounce { animation: bounce 0.5s infinite; }
+
+/* 페이지 전환 유틸리티 */
+.page-hidden { display: none !important; }
+.page-nav-active { color: var(--theme-color) !important; font-weight: 800; border-bottom: 2px solid var(--theme-color); }
+
+/* 모바일 하단바 네비게이션 */
+.mobile-nav-btn {
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    height: 100%; width: 100%; color: #94a3b8; transition: color 0.2s;
+}
+.mobile-nav-active { color: var(--theme-color) !important; }
+.mobile-nav-active svg { stroke: var(--theme-color); stroke-width: 2.5px; }
+
+/* 품절(Sold Out) 스타일 */
+.sold-out { pointer-events: none; opacity: 0.9; }
+.sold-out .img-container::after { 
+    content: ""; position: absolute; inset: 0; background-color: rgba(255, 255, 255, 0.6); backdrop-filter: grayscale(100%);
+}
+.sold-out-badge { 
+    position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; 
+    color: #475569; font-weight: 800; font-size: 1.2rem; z-index: 10; letter-spacing: 2px; border: 4px double #475569; margin: 20%; transform: rotate(-10deg);
+}
+
+/* 카테고리 칩 */
+.category-chip.selected { background-color: var(--theme-color); color: white; border-color: var(--theme-color); box-shadow: 0 4px 6px -1px rgba(15, 23, 42, 0.2); }
+
+/* 관리자 진입 FAB 버튼 */
+.fab-container { pointer-events: none; position: fixed; bottom: 0; right: 0; z-index: 100; }
+.fab-main-btn { 
+    pointer-events: auto; position: fixed; bottom: 100px; right: 20px; z-index: 100; 
+    width: 50px; height: 50px; border-radius: 20px; background: var(--theme-color); color: white; 
+    display: flex; align-items: center; justify-content: center; box-shadow: 0 8px 20px -5px rgba(15, 23, 42, 0.4); 
+    cursor: pointer; transition: transform 0.2s, background-color 0.2s; 
+}
+.fab-main-btn:hover { transform: scale(1.05); background-color: #1e293b; }
+
+/* 이미지 관련 (Zoom 효과, 대체 이미지) */
+.img-fallback { background: #f1f5f9; display: flex; align-items: center; justify-content: center; color: #cbd5e1; font-size: 0.8rem; font-weight: bold; letter-spacing: 1px; }
+.img-zoom-container { overflow: hidden; }
+.img-zoom-container img { transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1); }
+.group:hover .img-zoom-container img { transform: scale(1.05); }
+
+/* 커스텀 스크롤바 */
+.custom-scrollbar::-webkit-scrollbar { width: 5px; }
+.custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+.custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+.custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+
+/* 모달 (공통) */
+.modal-overlay { 
+    position: fixed; inset: 0; background-color: rgba(15, 23, 42, 0.6); 
+    z-index: 150; display: flex; align-items: center; justify-content: center; 
+    padding: 1rem; backdrop-filter: blur(4px); animation: fadeIn 0.2s ease-out;
+}
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+/* 공지사항 바 */
+.notice-bar-gradient { background: #fff; border-bottom: 1px solid #f1f5f9; cursor: default; }
+.toast-enter { animation: slideInTop 0.4s cubic-bezier(0.16, 1, 0.3, 1); }
+@keyframes slideInTop { from { transform: translateY(-20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+
+/* 디자인 수정 모드 (텍스트 클릭 수정) */
+body.design-mode .editable-target {
+    position: relative; cursor: pointer; outline: 2px dashed #3b82f6; outline-offset: 4px; border-radius: 4px; z-index: 50;
+}
+body.design-mode .editable-target::after {
+    content: 'EDIT'; position: absolute; top: -18px; right: -2px; background: #3b82f6; color: white;
+    font-size: 10px; font-weight: bold; padding: 2px 6px; border-radius: 4px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+.admin-only, .design-btn { display: none !important; }
+body.admin-mode .admin-only, body.design-mode .design-btn { display: flex !important; }
+
+
+/* =========================================
+   3. ADMIN DASHBOARD UI (새로 추가된 디자인)
+   ========================================= */
+#admin-dashboard { background-color: var(--admin-bg); font-family: 'Pretendard', sans-serif; }
+
+/* 사이드바 - Dark Theme */
+.admin-sidebar { background-color: var(--admin-sidebar); color: #94a3b8; border-right: 1px solid #1e293b; }
+.admin-sidebar-section { padding: 0 1.5rem; margin-top: 2rem; margin-bottom: 0.75rem; font-size: 0.7rem; font-weight: 800; color: #475569; text-transform: uppercase; letter-spacing: 0.05em; }
+
+.admin-sidebar-item {
+    display: flex; align-items: center; gap: 12px; padding: 12px 24px; color: #94a3b8; transition: all 0.2s; font-size: 0.9rem; font-weight: 500; cursor: pointer; border-left: 3px solid transparent;
+}
+.admin-sidebar-item:hover { background-color: rgba(255,255,255,0.05); color: #fff; }
+.admin-sidebar-item.active { background-color: rgba(59, 130, 246, 0.1); color: #60a5fa; border-left-color: #3b82f6; font-weight: 600; }
+.admin-sidebar-item svg { width: 18px; height: 18px; stroke-width: 2px; }
+
+/* 대시보드 카드 */
+.admin-card { 
+    background: white; border-radius: 16px; padding: 24px; 
+    border: 1px solid #e2e8f0; box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    transition: transform 0.2s, box-shadow 0.2s; display: flex; flex-direction: column; justify-content: space-between; height: 100%;
+}
+.admin-card:hover { transform: translateY(-2px); box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05); }
+
+/* 관리자 테이블 */
+.admin-table-container { 
+    background: white; border-radius: 16px; border: 1px solid #e2e8f0; 
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05); overflow: hidden; 
+}
+.admin-table-th { 
+    padding: 16px 24px; text-align: left; font-size: 0.75rem; font-weight: 700; 
+    color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; 
+    background-color: #f8fafc; border-bottom: 1px solid #e2e8f0; 
+}
+.admin-table-td { 
+    padding: 16px 24px; font-size: 0.875rem; color: #334155; 
+    border-bottom: 1px solid #f1f5f9; vertical-align: middle; white-space: nowrap;
+}
+.admin-table-row { transition: background-color 0.1s; }
+.admin-table-row:hover { background-color: #f8fafc; }
+.admin-table-row:last-child .admin-table-td { border-bottom: none; }
+
+/* 뱃지(Badge) 스타일 */
+.saas-badge { display: inline-flex; align-items: center; padding: 4px 10px; border-radius: 9999px; font-size: 11px; font-weight: 700; line-height: 1; border: 1px solid transparent; }
+.saas-badge-blue { background-color: #eff6ff; color: #2563eb; border-color: rgba(37, 99, 235, 0.1); }
+.saas-badge-green { background-color: #f0fdf4; color: #16a34a; border-color: rgba(22, 163, 74, 0.1); }
+.saas-badge-red { background-color: #fef2f2; color: #dc2626; border-color: rgba(220, 38, 38, 0.1); }
+.saas-badge-gray { background-color: #f1f5f9; color: #64748b; border-color: #e2e8f0; }
+
+/* 관리자 액션 버튼 & 입력폼 */
+.saas-btn-primary {
+    background-color: #0f172a; color: white; padding: 10px 20px; border-radius: 10px;
+    font-size: 0.875rem; font-weight: 700; transition: all 0.2s;
+    display: inline-flex; align-items: center; gap: 8px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+.saas-btn-primary:hover { background-color: #1e293b; transform: translateY(-1px); box-shadow: 0 6px 8px -1px rgba(0, 0, 0, 0.15); }
+
+.saas-search-input { 
+    width: 100%; padding: 12px 16px; border-radius: 12px; border: 1px solid #e2e8f0; 
+    background-color: white; font-size: 0.875rem; outline: none; transition: all 0.2s; 
+}
+.saas-search-input:focus { border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1); }
+
+/* 관리자 탭 전환 애니메이션 */
+.admin-tab-content { animation: fadeInUp 0.4s cubic-bezier(0.16, 1, 0.3, 1); }
+@keyframes fadeInUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+/* 블로그 관리 카드 */
+.admin-blog-item {
+    background: white; border-radius: 12px; border: 1px solid #e2e8f0; padding: 16px;
+    display: flex; gap: 16px; align-items: center; transition: box-shadow 0.2s;
+}
+.admin-blog-item:hover { box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); }
+
+/* 모바일 카드 뷰 (Responsive Admin) */
+@media (max-width: 768px) {
+    .admin-table-th { display: none; }
+    .admin-table-row {
+        display: flex; flex-direction: column; padding: 20px; margin-bottom: 16px;
+        background: white; border-radius: 16px; border: 1px solid #e2e8f0; box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+    }
+    .admin-table-td {
+        padding: 4px 0; border: none; display: flex; justify-content: space-between; align-items: center; width: 100%; white-space: normal;
+    }
+    .admin-table-td:first-child { display: none; } /* 체크박스 숨김 */
+    
+    .mobile-label { display: inline-block; font-weight: 700; color: #64748b; margin-right: auto; font-size: 11px; width: 70px; }
+    .mobile-hide { display: none !important; }
+    .mobile-card-actions { margin-top: 12px; justify-content: flex-end; }
+}
+@media (min-width: 769px) { .mobile-label { display: none; } }
+
+/* 관리자 모달 개선 */
+#answer-modal .modal-overlay, #editor-modal .modal-overlay {
+    z-index: 350;
+}
+
+/* 관리자 테이블 개선 - 가로 스크롤 */
+.admin-table-container {
+    overflow-x: auto;
+}
+
+.admin-table-container table {
+    min-width: 800px;
+}
+
+/* Lucide 아이콘 초기화 방지 */
+.admin-sidebar-item svg,
+.saas-btn-primary svg {
+    flex-shrink: 0;
+}
+
+/* 툴바 반응형 개선 */
+#order-toolbar {
+    flex-wrap: wrap;
+}
+
+@media (max-width: 768px) {
+    #order-toolbar {
+        gap: 12px;
+    }
+
+    #order-toolbar > div {
+        width: 100%;
+    }
+
+    .order-filter-btn {
+        flex: 1;
+        min-width: 0;
+    }
+}
