@@ -280,12 +280,68 @@ window.bulkAction = async (action) => {
 };
 
 // =========================================
-// 4. 상품 관리 (검색/카테고리 필터 추가)
+// 4. 상품 관리 (검색/카테고리/상태 필터 + 인라인 토글 + 필터 상태 유지)
 // =========================================
 
 let allProductsCache = [];
 let productFilterCategory = "all";
 let productSearchTerm = "";
+let productStatusFilter = "all";
+
+// ✅ 필터 상태 sessionStorage 유지
+const PRODUCT_FILTERS_STORAGE_KEY = "admin_products_filters_v1";
+
+function loadProductFilterState() {
+  try {
+    const raw = sessionStorage.getItem(PRODUCT_FILTERS_STORAGE_KEY);
+    if (!raw) return;
+    const s = JSON.parse(raw);
+    if (s && typeof s === "object") {
+      if (typeof s.status === "string") productStatusFilter = s.status;
+      if (typeof s.category === "string") productFilterCategory = s.category;
+      if (typeof s.search === "string") productSearchTerm = s.search;
+    }
+  } catch (e) {
+    // ignore
+  }
+}
+
+function saveProductFilterState() {
+  try {
+    sessionStorage.setItem(PRODUCT_FILTERS_STORAGE_KEY, JSON.stringify({
+      status: productStatusFilter,
+      category: productFilterCategory,
+      search: productSearchTerm
+    }));
+  } catch (e) {
+    // ignore
+  }
+}
+
+// 모듈 로드시 1회 복구
+loadProductFilterState();
+
+function setActiveProductStatusBtn() {
+  document.querySelectorAll('.product-status-btn').forEach(btn => {
+    const v = btn.getAttribute('data-status');
+    const active = v === productStatusFilter;
+
+    btn.classList.toggle('bg-slate-900', active);
+    btn.classList.toggle('text-white', active);
+    btn.classList.toggle('border-slate-900', active);
+
+    btn.classList.toggle('bg-white', !active);
+    btn.classList.toggle('text-slate-600', !active);
+    btn.classList.toggle('border-slate-200', !active);
+  });
+}
+
+window.filterProductStatus = (status) => {
+  productStatusFilter = status || "all";
+  saveProductFilterState();
+  setActiveProductStatusBtn();
+  window.applyProductFilters();
+};
 
 function renderProductsToolbar() {
   const tableContainer = document.querySelector('#admin-products .admin-table-container');
@@ -297,6 +353,23 @@ function renderProductsToolbar() {
     toolbar.className = 'flex flex-col md:flex-row gap-3 mb-4 justify-between items-center';
 
     toolbar.innerHTML = `
+      <div class="flex gap-2 w-full md:w-auto overflow-x-auto pb-1 md:pb-0 items-center">
+        <button type="button"
+          class="product-status-btn px-4 py-2 rounded-xl bg-white border border-slate-200 text-sm font-bold hover:bg-slate-50 transition whitespace-nowrap"
+          data-status="all"
+          onclick="window.filterProductStatus('all')">전체</button>
+
+        <button type="button"
+          class="product-status-btn px-4 py-2 rounded-xl bg-white border border-slate-200 text-sm font-bold hover:bg-slate-50 transition whitespace-nowrap"
+          data-status="available"
+          onclick="window.filterProductStatus('available')">판매중</button>
+
+        <button type="button"
+          class="product-status-btn px-4 py-2 rounded-xl bg-white border border-slate-200 text-sm font-bold hover:bg-slate-50 transition whitespace-nowrap"
+          data-status="soldout"
+          onclick="window.filterProductStatus('soldout')">품절</button>
+      </div>
+
       <div class="flex gap-2 w-full md:w-auto items-center">
         <div class="relative flex-1 md:w-56">
           <select id="product-category-select"
@@ -304,9 +377,7 @@ function renderProductsToolbar() {
             onchange="window.filterProductsByCategory(this.value)">
           </select>
         </div>
-      </div>
 
-      <div class="flex gap-2 w-full md:w-auto items-center">
         <div class="relative flex-1 md:w-64">
           <i data-lucide="search" class="absolute left-3 top-3 text-slate-400 w-4 h-4"></i>
           <input type="text" id="product-search-input" placeholder="상품명 검색"
@@ -334,10 +405,54 @@ function renderProductsToolbar() {
     select.value = productFilterCategory;
   }
 
+  // ✅ 검색어 UI 반영 (세션 복구 포함)
+  const searchInput = document.getElementById("product-search-input");
+  if (searchInput) searchInput.value = productSearchTerm || "";
+
+  // ✅ 상태 버튼 활성화 표시
+  setActiveProductStatusBtn();
+
   if (window.lucide) window.lucide.createIcons();
 }
 
+// ✅ 인라인 토글(품절/메인노출)
+window.toggleProductSoldOut = async (id, current) => {
+  if (!state.isAdmin) return window.showToast("권한이 없습니다.", "error");
+  try {
+    await updateDoc(doc(getPublicDataRef(COLLECTIONS.PRODUCTS), id), {
+      soldOut: !current,
+      updatedAt: Date.now()
+    });
+    window.showToast(!current ? "품절로 변경되었습니다." : "판매중으로 변경되었습니다.");
+  } catch (e) {
+    console.error(e);
+    window.showToast("상태 변경 실패", "error");
+  }
+};
+
+window.toggleProductFeatured = async (id, current) => {
+  if (!state.isAdmin) return window.showToast("권한이 없습니다.", "error");
+  try {
+    await updateDoc(doc(getPublicDataRef(COLLECTIONS.PRODUCTS), id), {
+      featured: !current,
+      updatedAt: Date.now()
+    });
+    window.showToast(!current ? "메인 노출로 변경되었습니다." : "메인 노출 해제되었습니다.");
+  } catch (e) {
+    console.error(e);
+    window.showToast("노출 변경 실패", "error");
+  }
+};
+
 function createProductRow(p, id) {
+  const safeDate = (() => {
+    const d = new Date(p.createdAt || 0);
+    return isNaN(d.getTime()) ? "-" : d.toLocaleDateString();
+  })();
+
+  const isSoldOut = !!p.soldOut;
+  const isFeatured = !!p.featured;
+
   return `
     <tr class="admin-table-row group">
       <td class="admin-table-td w-20">
@@ -349,7 +464,7 @@ function createProductRow(p, id) {
         <span class="mobile-label">상품명</span>
         <div>
           <div class="font-bold text-slate-800 text-sm">${p.name}</div>
-          <div class="text-xs text-slate-400 font-mono">${new Date(p.createdAt).toLocaleDateString()}</div>
+          <div class="text-xs text-slate-400 font-mono">${safeDate}</div>
         </div>
       </td>
       <td class="admin-table-td">
@@ -367,10 +482,25 @@ function createProductRow(p, id) {
             : `<span class="font-bold text-slate-700">${Number(p.price).toLocaleString()}원</span>`
         }
       </td>
+
+      <!-- ✅ 상태(품절) + 메인노출 인라인 토글 -->
       <td class="admin-table-td">
         <span class="mobile-label">상태</span>
-        ${p.soldOut ? '<span class="saas-badge saas-badge-red">품절</span>' : '<span class="saas-badge saas-badge-green">판매중</span>'}
+        <div class="flex flex-col gap-2 items-start">
+          <button type="button"
+            onclick="window.toggleProductSoldOut('${id}', ${isSoldOut})"
+            class="px-3 py-1.5 rounded-lg text-xs font-bold transition border shadow-sm ${isSoldOut ? 'bg-red-50 text-red-600 border-red-200 hover:bg-red-100' : 'bg-green-50 text-green-700 border-green-200 hover:bg-green-100'}">
+            ${isSoldOut ? '품절' : '판매중'}
+          </button>
+
+          <button type="button"
+            onclick="window.toggleProductFeatured('${id}', ${isFeatured})"
+            class="px-3 py-1.5 rounded-lg text-xs font-bold transition border shadow-sm ${isFeatured ? 'bg-blue-600 text-white border-blue-600 hover:bg-blue-700' : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'}">
+            ${isFeatured ? '메인노출' : '일반'}
+          </button>
+        </div>
       </td>
+
       <td class="admin-table-td text-right mobile-card-actions">
         <div class="flex items-center justify-end gap-2">
           <button onclick="window.openProductModal('${id}')" class="p-2 rounded-lg hover:bg-blue-50 text-slate-400 hover:text-blue-600 transition border border-transparent hover:border-blue-100">
@@ -386,11 +516,13 @@ function createProductRow(p, id) {
 
 window.filterProductsByCategory = (cat) => {
   productFilterCategory = cat || "all";
+  saveProductFilterState();
   window.applyProductFilters();
 };
 
 window.searchLocalProducts = (term) => {
   productSearchTerm = (term || "").trim().toLowerCase();
+  saveProductFilterState();
   window.applyProductFilters();
 };
 
@@ -399,6 +531,13 @@ window.applyProductFilters = () => {
   if (!list) return;
 
   let filtered = [...allProductsCache];
+
+  // ✅ 상태 필터
+  if (productStatusFilter === "available") {
+    filtered = filtered.filter(p => !p.soldOut);
+  } else if (productStatusFilter === "soldout") {
+    filtered = filtered.filter(p => !!p.soldOut);
+  }
 
   if (productFilterCategory !== "all") {
     filtered = filtered.filter(p => normalizeCategory(p.category) === productFilterCategory);
@@ -427,7 +566,7 @@ function renderAdminProducts() {
       allProductsCache = [];
       snap.forEach(d => allProductsCache.push({ id: d.id, ...d.data() }));
 
-      // 툴바 먼저 세팅 (카테고리 옵션 갱신 포함)
+      // 툴바 먼저 세팅 (카테고리 옵션 갱신 + 세션 복구 UI 반영 포함)
       renderProductsToolbar();
 
       if (allProductsCache.length === 0) {
@@ -440,7 +579,6 @@ function renderAdminProducts() {
     }
   );
 }
-
 
 // =========================================
 // 5. 문의 관리
@@ -611,19 +749,22 @@ function renderAdminBlogs() {
 // =========================================
 
 function renderAdminSettings() {
-    getDoc(getConfDoc()).then(s => {
-        const d = s.data() || {};
-        const form = document.getElementById('admin-settings-form');
-        if(!form) return;
-        form.storeName.value = d.storeName || '';
-        form.ownerName.value = d.ownerName || '';
-        form.bizNum.value = d.bizNum || '';
-        form.csPhone.value = d.csPhone || '';
-        form.address.value = d.address || '';
-        form.bankName.value = d.bankName || '';
-        form.bankNumber.value = d.bankNumber || '';
-        form.bankOwner.value = d.bankOwner || '';
-    });
+  getDoc(getConfDoc()).then(s => {
+    const d = s.data() || {};
+    const form = document.getElementById('admin-settings-form');
+    if (!form) return;
+
+    if (form.storeName) form.storeName.value = d.storeName || '';
+    if (form.ownerName) form.ownerName.value = d.ownerName || '';
+    if (form.bizNum) form.bizNum.value = d.bizNum || '';
+    if (form.csPhone) form.csPhone.value = d.csPhone || '';
+    if (form.address) form.address.value = d.address || '';
+    if (form.footerDesc) form.footerDesc.value = d.footerDesc || '';
+
+    if (form.bankName) form.bankName.value = d.bankName || '';
+    if (form.bankNumber) form.bankNumber.value = d.bankNumber || '';
+    if (form.bankOwner) form.bankOwner.value = d.bankOwner || '';
+  });
 }
 
 window.saveAdminSettings = async () => {
@@ -636,14 +777,15 @@ window.saveAdminSettings = async () => {
     }
 
     const data = {
-        storeName: form.storeName.value,
-        ownerName: form.ownerName.value,
-        bizNum: form.bizNum.value,
-        csPhone: form.csPhone.value,
-        address: form.address.value,
-        bankName: form.bankName.value,
-        bankNumber: form.bankNumber.value,
-        bankOwner: form.bankOwner.value
+        storeName: form.storeName?.value || "",
+        ownerName: form.ownerName?.value || "",
+        bizNum: form.bizNum?.value || "",
+        csPhone: form.csPhone?.value || "",
+        address: form.address?.value || "",
+        footerDesc: form.footerDesc?.value || "",
+        bankName: form.bankName?.value || "",
+        bankNumber: form.bankNumber?.value || "",
+        bankOwner: form.bankOwner?.value || ""
     };
 
     console.log('저장할 데이터:', data);
@@ -668,51 +810,132 @@ window.openEditor = (type, id = null, data = {}) => {
     const fields = document.getElementById("editor-fields");
     
     // [디자인 적용] 모달 그리드 레이아웃
-    fields.className = "grid grid-cols-1 md:grid-cols-2 gap-4";
+    fields.className =
+  type === "상품"
+    ? "grid grid-cols-1 md:grid-cols-3 gap-3 max-h-[62vh] overflow-y-auto pr-1"
+    : "grid grid-cols-1 md:grid-cols-2 gap-4";
     fields.innerHTML = "";
 
     const config = {
         "상품": [
-            { n: "name", l: "상품명", col: 2 }, { n: "price", l: "정상가(원)" }, { n: "salePrice", l: "할인가(원, 선택)" },
-            { n: "unit", l: "단위(예: 1kg)", col: 2 }, { n: "category", l: "카테고리", hidden: true },
-            { n: "image", l: "이미지", img: true, col: 2 }, { n: "description", l: "설명", area: true, col: 2 },
-            { n: "featured", l: "메인 노출(오늘의 추천)", chk: true }, { n: "soldOut", l: "품절", chk: true }
-        ],
+            { n: "name", l: "상품명", col: 3 },
+            { n: "category", l: "카테고리", hidden: true }, // 드롭다운 UI가 별도이므로 hidden 유지
+            { n: "unit", l: "단위(예: 1kg)" },
+             { n: "price", l: "정상가(원)" },
+            { n: "salePrice", l: "할인가(원, 선택)" },
+
+            { n: "image", l: "이미지", img: true, col: 3 },
+             { n: "description", l: "설명", area: true, col: 3 },
+
+             { n: "featured", l: "메인 노출(오늘의 추천)", chk: true },
+            { n: "soldOut", l: "품절", chk: true }
+            ],
+
         "공지": [{ n: "title", l: "제목", col: 2 }, { n: "content", l: "내용", area: true, col: 2 }, { n: "showPopup", l: "메인 팝업 노출", chk: true }],
         "블로그": [{ n: "title", l: "제목", col: 2 }, { n: "image", l: "대표 이미지", img: true, col: 2 }, { n: "content", l: "본문 내용", area: true, col: 2 }, { n: "isHidden", l: "숨김 처리", chk: true }]
     }[type];
 
+    // ✅ 상품 카테고리: 드롭다운 검색 UI (당신이 적용 완료한 전제)
     if (type === "상품") {
-        fields.innerHTML += `<div class="col-span-1 md:col-span-2 mb-2 p-4 bg-slate-50 rounded-xl border border-slate-200"><label class="text-xs text-slate-500 font-bold block mb-2">카테고리 설정</label><div id="category-chips" class="flex flex-wrap gap-2 mb-2"></div><input type="hidden" id="editor-input-category" value="${data.category || ''}"></div>`;
-        setTimeout(() => renderCategoryChipsInModal(data.category), 0);
+      fields.innerHTML += `
+        <div class="col-span-1 md:col-span-2 mb-2 p-4 bg-slate-50 rounded-xl border border-slate-200">
+          <label class="text-xs text-slate-500 font-bold block mb-2">카테고리 설정</label>
+
+          <div class="relative">
+            <input
+              type="text"
+              id="category-search-input"
+              class="w-full p-3 border rounded-xl text-sm bg-white outline-none focus:border-blue-500"
+              placeholder="카테고리 검색 또는 선택"
+              autocomplete="off"
+            />
+
+            <div
+              id="category-dropdown"
+              class="absolute z-50 mt-2 w-full bg-white border border-slate-200 rounded-xl shadow-lg overflow-hidden hidden"
+            ></div>
+          </div>
+
+          <input type="hidden" id="editor-input-category" value="${data.category || ''}">
+          <div class="mt-2 text-xs text-slate-500">
+            선택된 카테고리: <span id="category-selected-label" class="font-bold text-slate-700"></span>
+          </div>
+        </div>
+      `;
+      setTimeout(() => initCategoryDropdownInModal(data.category || ""), 0);
     }
 
     config.forEach(f => {
-        if (f.hidden) return;
-        const spanClass = f.col === 2 ? "col-span-1 md:col-span-2" : "col-span-1";
-        let html = "";
-        if (f.img) {
-            html = `<div class="flex flex-col md:flex-row gap-2 items-end"><div class="flex-1 w-full"><label class="text-xs text-slate-500 block font-bold mb-1">${f.l}</label><input id="editor-input-${f.n}" value="${data[f.n] || ''}" class="w-full p-2.5 border rounded-lg text-sm bg-slate-50" placeholder="이미지 URL 직접 입력"></div><label class="bg-slate-800 text-white px-4 py-2.5 rounded-lg cursor-pointer text-xs font-bold shrink-0 shadow-sm flex items-center justify-center w-full md:w-auto hover:bg-slate-700 transition"><i data-lucide="image" class="w-4 h-4 mr-1"></i> 파일 선택<input type="file" class="hidden" accept="image/*" onchange="window.handleImageUpload(this,'editor-input-${f.n}')"></label></div><img id="editor-preview-${f.n}" src="${data[f.n] || ''}" class="w-full h-40 object-cover mt-2 rounded-xl border bg-slate-50 ${data[f.n] ? '' : 'hidden'}">`;
-        } else if (f.area) {
-            html = `<div><label class="text-xs text-slate-500 block font-bold mb-1">${f.l}</label><textarea id="editor-input-${f.n}" class="w-full p-3 border rounded-xl text-sm h-32 resize-none bg-slate-50 focus:bg-white transition outline-none focus:border-blue-500">${data[f.n] || ''}</textarea></div>`;
-        } else if (f.chk) {
-            html = `<label class="flex items-center gap-2 text-sm pt-4 cursor-pointer font-bold text-slate-700 h-full"><input type="checkbox" id="editor-input-${f.n}" ${data[f.n] ? 'checked' : ''} class="w-5 h-5 text-blue-600 rounded focus:ring-blue-500 border-gray-300"> ${f.l}</label>`;
-        } else {
-            html = `<div><label class="text-xs text-slate-500 block font-bold mb-1">${f.l}</label><input id="editor-input-${f.n}" value="${data[f.n] || ''}" class="w-full p-3 border rounded-xl text-sm bg-slate-50 focus:bg-white transition outline-none focus:border-blue-500"></div>`;
-        }
-        fields.innerHTML += `<div class="${spanClass}">${html}</div>`;
-    });
+  if (f.hidden) return;
+
+  const span = f.col || 1; // 1,2,3 지원
+  const spanClass = `col-span-1 md:col-span-${span}`;
+  let html = "";
+
+  if (f.img) {
+    html = `
+      <div class="flex flex-col md:flex-row gap-2 items-end">
+        <div class="flex-1 w-full">
+          <label class="text-xs text-slate-500 block font-bold mb-1">${f.l}</label>
+          <input id="editor-input-${f.n}" value="${data[f.n] || ''}"
+            class="w-full p-2.5 border rounded-lg text-sm bg-slate-50"
+            placeholder="이미지 URL 직접 입력">
+        </div>
+        <label class="bg-slate-800 text-white px-4 py-2.5 rounded-lg cursor-pointer text-xs font-bold shrink-0 shadow-sm flex items-center justify-center w-full md:w-auto hover:bg-slate-700 transition">
+          <i data-lucide="image" class="w-4 h-4 mr-1"></i> 파일 선택
+          <input type="file" class="hidden" accept="image/*" onchange="window.handleImageUpload(this,'editor-input-${f.n}')">
+        </label>
+      </div>
+
+      <img id="editor-preview-${f.n}" src="${data[f.n] || ''}"
+        class="w-full h-32 object-cover mt-2 rounded-xl border bg-slate-50 ${data[f.n] ? '' : 'hidden'}">
+    `;
+  } else if (f.area) {
+    html = `
+      <div>
+        <label class="text-xs text-slate-500 block font-bold mb-1">${f.l}</label>
+        <textarea id="editor-input-${f.n}"
+          class="w-full p-3 border rounded-xl text-sm h-24 resize-none bg-slate-50 focus:bg-white transition outline-none focus:border-blue-500">${data[f.n] || ''}</textarea>
+      </div>
+    `;
+  } else if (f.chk) {
+    html = `
+      <label class="flex items-center gap-2 text-sm pt-4 cursor-pointer font-bold text-slate-700 h-full">
+        <input type="checkbox" id="editor-input-${f.n}" ${data[f.n] ? 'checked' : ''}
+          class="w-5 h-5 text-blue-600 rounded focus:ring-blue-500 border-gray-300">
+        ${f.l}
+      </label>
+    `;
+  } else {
+    html = `
+      <div>
+        <label class="text-xs text-slate-500 block font-bold mb-1">${f.l}</label>
+        <input id="editor-input-${f.n}" value="${data[f.n] || ''}"
+          class="w-full p-3 border rounded-xl text-sm bg-slate-50 focus:bg-white transition outline-none focus:border-blue-500">
+      </div>
+    `;
+  }
+
+  fields.innerHTML += `<div class="${spanClass}">${html}</div>`;
+});
+
     
     if(window.lucide) window.lucide.createIcons();
     document.getElementById("editor-delete-btn").classList.toggle("hidden", !id);
     modal.classList.remove("hidden");
 };
 
+// ✅ createdAt 덮어쓰기 방지 반영
 window.saveEditor = async () => {
     const id = document.getElementById("editor-id").value;
     const type = document.getElementById("editor-type").value;
-    const finalData = { createdAt: Date.now() };
+
+    const finalData = {};
     const colName = { "상품": COLLECTIONS.PRODUCTS, "공지": COLLECTIONS.NOTICES, "블로그": COLLECTIONS.BLOGS }[type];
+
+    // 신규만 createdAt 설정, 수정은 유지
+    if (!id) finalData.createdAt = Date.now();
+    finalData.updatedAt = Date.now();
 
     const inputs = document.querySelectorAll(`[id^="editor-input-"]`);
     inputs.forEach(el => {
@@ -722,23 +945,27 @@ window.saveEditor = async () => {
     });
 
     if (type === '상품') {
-        finalData.price = finalData.price.replace(/[^0-9]/g, "");
-        if (finalData.salePrice) finalData.salePrice = finalData.salePrice.replace(/[^0-9]/g, "");
+        finalData.price = String(finalData.price || "").replace(/[^0-9]/g, "");
+        if (finalData.salePrice) finalData.salePrice = String(finalData.salePrice).replace(/[^0-9]/g, "");
         if (!finalData.category) return window.showToast("카테고리를 선택해주세요", 'error');
     }
 
     try {
-        if (id) await setDoc(doc(getPublicDataRef(colName), id), { ...finalData, updatedAt: Date.now() }, { merge: true });
+        if (id) await setDoc(doc(getPublicDataRef(colName), id), finalData, { merge: true });
         else await addDoc(getPublicDataRef(colName), finalData);
+
         document.getElementById("editor-modal").classList.add("hidden");
         window.showToast("저장되었습니다.");
         if (type === '상품') window.showAdminTab('products');
         if (type === '공지') window.showAdminTab('notices');
         if (type === '블로그') window.showAdminTab('blogs');
-    } catch (e) { window.showToast("저장 실패", 'error'); }
+    } catch (e) { 
+        console.error(e);
+        window.showToast("저장 실패", 'error'); 
+    }
 };
 
-// [기능 복구] 카테고리 칩 관리 로직
+// [기능 복구] 카테고리 칩 관리 로직 (유지: 다른 기능 누락 방지)
 function renderCategoryChipsInModal(selectedCat = "") {
     const container = document.getElementById("category-chips");
     if (!container) return;
@@ -752,19 +979,94 @@ function renderCategoryChipsInModal(selectedCat = "") {
     if(window.lucide) window.lucide.createIcons();
 }
 
+// ✅ 드롭다운 검색 UI 초기화
+function initCategoryDropdownInModal(selectedCat = "") {
+  const input = document.getElementById("category-search-input");
+  const dropdown = document.getElementById("category-dropdown");
+  const hidden = document.getElementById("editor-input-category");
+  const label = document.getElementById("category-selected-label");
+  if (!input || !dropdown || !hidden || !label) return;
+
+  // "실제 존재하는 카테고리만" 노출
+  const cats = Array.from(new Set(
+    (allProductsCache || [])
+      .map(p => normalizeCategory(p.category))
+      .filter(Boolean)
+  ));
+
+  const setSelected = (cat) => {
+    hidden.value = cat;
+    label.innerText = cat || "(미선택)";
+    input.value = cat || "";
+    dropdown.classList.add("hidden");
+  };
+
+  // 초기 선택값
+  setSelected(selectedCat);
+
+  const renderList = (term = "") => {
+    const t = (term || "").trim().toLowerCase();
+    const filtered = cats.filter(c => String(c).toLowerCase().includes(t));
+
+    if (filtered.length === 0) {
+      dropdown.innerHTML = `<div class="p-3 text-sm text-slate-400">검색 결과가 없습니다.</div>`;
+      return;
+    }
+
+    dropdown.innerHTML = filtered.map(c => `
+      <button type="button"
+        class="w-full text-left px-4 py-2.5 text-sm hover:bg-slate-50 transition ${c === hidden.value ? 'font-bold text-blue-600' : 'text-slate-700'}"
+        data-cat="${c}"
+      >${c}</button>
+    `).join("");
+  };
+
+  input.addEventListener("focus", () => {
+  dropdown.classList.remove("hidden");
+  renderList(""); // ✅ 포커스 시 전체 목록 표시
+    });
+
+  input.addEventListener("input", () => {
+    dropdown.classList.remove("hidden");
+    renderList(input.value);
+  });
+
+  dropdown.addEventListener("click", (e) => {
+    const btn = e.target.closest("button[data-cat]");
+    if (!btn) return;
+    setSelected(btn.getAttribute("data-cat"));
+  });
+
+  // 모달 외부 클릭 시 닫기 (모달 열 때마다 1회만)
+  document.addEventListener("click", (e) => {
+    const wrap = input.parentElement;
+    if (!wrap.contains(e.target)) dropdown.classList.add("hidden");
+  }, { once: true });
+}
+
+// [기능 복구] 카테고리 칩 편집 로직 (유지)
 window.toggleCategoryEdit = () => {
     state.isCategoryEditMode = !state.isCategoryEditMode;
     document.querySelectorAll('.cat-delete-btn').forEach(btn => btn.classList.toggle('hidden', !state.isCategoryEditMode));
-    document.getElementById('cat-add-group').classList.toggle('hidden', !state.isCategoryEditMode);
-    document.getElementById('cat-edit-toggle').innerText = state.isCategoryEditMode ? "완료" : "편집";
+    const addGroup = document.getElementById('cat-add-group');
+    if (addGroup) addGroup.classList.toggle('hidden', !state.isCategoryEditMode);
+    const toggle = document.getElementById('cat-edit-toggle');
+    if (toggle) toggle.innerText = state.isCategoryEditMode ? "완료" : "편집";
 };
-window.selectCategory = (cat) => { document.getElementById("editor-input-category").value = cat; renderCategoryChipsInModal(cat); };
+
+window.selectCategory = (cat) => { 
+  const el = document.getElementById("editor-input-category");
+  if (el) el.value = cat;
+  renderCategoryChipsInModal(cat); 
+};
+
 window.addCategory = async () => {
     const val = normalizeCategory(document.getElementById("new-cat-input").value);
     if (!val) return;
     const newCats = Array.from(new Set([...state.configCategories, val]));
     await setDoc(getConfDoc(), { categories: newCats }, { merge: true });
 };
+
 window.removeCategory = async (cat) => {
     if (!confirm(`'${cat}' 카테고리를 삭제하시겠습니까?`)) return;
     const newCats = state.configCategories.filter(c => c !== cat);
