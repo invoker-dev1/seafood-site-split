@@ -280,53 +280,167 @@ window.bulkAction = async (action) => {
 };
 
 // =========================================
-// 4. 상품 관리
+// 4. 상품 관리 (검색/카테고리 필터 추가)
 // =========================================
 
-function renderAdminProducts() {
-    state.adminListeners.productsList = onSnapshot(query(getPublicDataRef(COLLECTIONS.PRODUCTS), orderBy('createdAt', 'desc')), (snap) => {
-        const list = document.getElementById('admin-product-list');
-        if (snap.empty) { list.innerHTML = '<tr><td colspan="6" class="p-12 text-center text-slate-400">등록된 상품이 없습니다.</td></tr>'; return; }
-        
-        list.innerHTML = snap.docs.map(d => {
-            const p = d.data();
-            return `
-                <tr class="admin-table-row group">
-                    <td class="admin-table-td w-20">
-                        <div class="w-12 h-12 rounded-lg bg-slate-100 overflow-hidden border border-slate-200">
-                            <img src="${p.image}" class="w-full h-full object-cover">
-                        </div>
-                    </td>
-                    <td class="admin-table-td">
-                        <span class="mobile-label">상품명</span>
-                        <div>
-                            <div class="font-bold text-slate-800 text-sm">${p.name}</div>
-                            <div class="text-xs text-slate-400 font-mono">${new Date(p.createdAt).toLocaleDateString()}</div>
-                        </div>
-                    </td>
-                    <td class="admin-table-td">
-                        <span class="mobile-label">카테고리</span>
-                        <span class="text-xs font-bold text-slate-500 bg-slate-100 px-2 py-1 rounded border border-slate-200">${p.category || '미분류'}</span>
-                    </td>
-                    <td class="admin-table-td">
-                        <span class="mobile-label">가격</span>
-                        ${p.salePrice ? `<div class="flex flex-col"><span class="text-red-500 font-bold text-sm">${Number(p.salePrice).toLocaleString()}원</span><span class="line-through text-xs text-slate-400">${Number(p.price).toLocaleString()}원</span></div>` : `<span class="font-bold text-slate-700">${Number(p.price).toLocaleString()}원</span>`}
-                    </td>
-                    <td class="admin-table-td">
-                        <span class="mobile-label">상태</span>
-                        ${p.soldOut ? '<span class="saas-badge saas-badge-red">품절</span>' : '<span class="saas-badge saas-badge-green">판매중</span>'}
-                    </td>
-                    <td class="admin-table-td text-right mobile-card-actions">
-                        <div class="flex items-center justify-end gap-2">
-                            <button onclick="window.openProductModal('${d.id}')" class="p-2 rounded-lg hover:bg-blue-50 text-slate-400 hover:text-blue-600 transition border border-transparent hover:border-blue-100"><i data-lucide="edit-3" size="16"></i></button>
-                            <button onclick="window.deleteItem('products','${d.id}')" class="p-2 rounded-lg hover:bg-red-50 text-slate-400 hover:text-red-600 transition border border-transparent hover:border-red-100"><i data-lucide="trash-2" size="16"></i></button>
-                        </div>
-                    </td>
-                </tr>`;
-        }).join('');
-        if(window.lucide) window.lucide.createIcons();
-    });
+let allProductsCache = [];
+let productFilterCategory = "all";
+let productSearchTerm = "";
+
+function renderProductsToolbar() {
+  const tableContainer = document.querySelector('#admin-products .admin-table-container');
+  let toolbar = document.getElementById('product-toolbar');
+
+  if (!toolbar) {
+    toolbar = document.createElement('div');
+    toolbar.id = 'product-toolbar';
+    toolbar.className = 'flex flex-col md:flex-row gap-3 mb-4 justify-between items-center';
+
+    toolbar.innerHTML = `
+      <div class="flex gap-2 w-full md:w-auto items-center">
+        <div class="relative flex-1 md:w-56">
+          <select id="product-category-select"
+            class="w-full px-4 py-2 rounded-xl bg-white border border-slate-200 text-sm font-bold outline-none focus:border-blue-500 transition"
+            onchange="window.filterProductsByCategory(this.value)">
+          </select>
+        </div>
+      </div>
+
+      <div class="flex gap-2 w-full md:w-auto items-center">
+        <div class="relative flex-1 md:w-64">
+          <i data-lucide="search" class="absolute left-3 top-3 text-slate-400 w-4 h-4"></i>
+          <input type="text" id="product-search-input" placeholder="상품명 검색"
+            class="w-full pl-10 pr-4 py-2 rounded-xl bg-white border border-slate-200 text-sm outline-none focus:border-blue-500 transition"
+            onkeyup="window.searchLocalProducts(this.value)">
+        </div>
+      </div>
+    `;
+
+    tableContainer.parentNode.insertBefore(toolbar, tableContainer);
+  }
+
+  // 카테고리 옵션 구성 (설정 카테고리 + 실제 상품 카테고리 합치기)
+  const select = document.getElementById('product-category-select');
+  if (select) {
+    const fromConfig = (state.configCategories || []).map(c => String(c).trim()).filter(Boolean);
+    const fromProducts = allProductsCache.map(p => normalizeCategory(p.category)).filter(Boolean);
+    const cats = Array.from(new Set([...fromConfig, ...fromProducts]));
+
+    select.innerHTML =
+      `<option value="all">전체 카테고리</option>` +
+      cats.map(c => `<option value="${c}">${c}</option>`).join("");
+
+    // 현재 선택값 유지
+    select.value = productFilterCategory;
+  }
+
+  if (window.lucide) window.lucide.createIcons();
 }
+
+function createProductRow(p, id) {
+  return `
+    <tr class="admin-table-row group">
+      <td class="admin-table-td w-20">
+        <div class="w-12 h-12 rounded-lg bg-slate-100 overflow-hidden border border-slate-200">
+          <img src="${p.image}" class="w-full h-full object-cover">
+        </div>
+      </td>
+      <td class="admin-table-td">
+        <span class="mobile-label">상품명</span>
+        <div>
+          <div class="font-bold text-slate-800 text-sm">${p.name}</div>
+          <div class="text-xs text-slate-400 font-mono">${new Date(p.createdAt).toLocaleDateString()}</div>
+        </div>
+      </td>
+      <td class="admin-table-td">
+        <span class="mobile-label">카테고리</span>
+        <span class="text-xs font-bold text-slate-500 bg-slate-100 px-2 py-1 rounded border border-slate-200">${p.category || '미분류'}</span>
+      </td>
+      <td class="admin-table-td">
+        <span class="mobile-label">가격</span>
+        ${
+          p.salePrice
+            ? `<div class="flex flex-col">
+                 <span class="text-red-500 font-bold text-sm">${Number(p.salePrice).toLocaleString()}원</span>
+                 <span class="line-through text-xs text-slate-400">${Number(p.price).toLocaleString()}원</span>
+               </div>`
+            : `<span class="font-bold text-slate-700">${Number(p.price).toLocaleString()}원</span>`
+        }
+      </td>
+      <td class="admin-table-td">
+        <span class="mobile-label">상태</span>
+        ${p.soldOut ? '<span class="saas-badge saas-badge-red">품절</span>' : '<span class="saas-badge saas-badge-green">판매중</span>'}
+      </td>
+      <td class="admin-table-td text-right mobile-card-actions">
+        <div class="flex items-center justify-end gap-2">
+          <button onclick="window.openProductModal('${id}')" class="p-2 rounded-lg hover:bg-blue-50 text-slate-400 hover:text-blue-600 transition border border-transparent hover:border-blue-100">
+            <i data-lucide="edit-3" size="16"></i>
+          </button>
+          <button onclick="window.deleteItem('products','${id}')" class="p-2 rounded-lg hover:bg-red-50 text-slate-400 hover:text-red-600 transition border border-transparent hover:border-red-100">
+            <i data-lucide="trash-2" size="16"></i>
+          </button>
+        </div>
+      </td>
+    </tr>`;
+}
+
+window.filterProductsByCategory = (cat) => {
+  productFilterCategory = cat || "all";
+  window.applyProductFilters();
+};
+
+window.searchLocalProducts = (term) => {
+  productSearchTerm = (term || "").trim().toLowerCase();
+  window.applyProductFilters();
+};
+
+window.applyProductFilters = () => {
+  const list = document.getElementById('admin-product-list');
+  if (!list) return;
+
+  let filtered = [...allProductsCache];
+
+  if (productFilterCategory !== "all") {
+    filtered = filtered.filter(p => normalizeCategory(p.category) === productFilterCategory);
+  }
+
+  if (productSearchTerm) {
+    filtered = filtered.filter(p => String(p.name || "").toLowerCase().includes(productSearchTerm));
+  }
+
+  if (filtered.length === 0) {
+    list.innerHTML = '<tr><td colspan="6" class="p-12 text-center text-slate-400">조건에 맞는 상품이 없습니다.</td></tr>';
+    return;
+  }
+
+  list.innerHTML = filtered.map(p => createProductRow(p, p.id)).join('');
+  if (window.lucide) window.lucide.createIcons();
+};
+
+function renderAdminProducts() {
+  state.adminListeners.productsList = onSnapshot(
+    query(getPublicDataRef(COLLECTIONS.PRODUCTS), orderBy('createdAt', 'desc')),
+    (snap) => {
+      const list = document.getElementById('admin-product-list');
+      if (!list) return;
+
+      allProductsCache = [];
+      snap.forEach(d => allProductsCache.push({ id: d.id, ...d.data() }));
+
+      // 툴바 먼저 세팅 (카테고리 옵션 갱신 포함)
+      renderProductsToolbar();
+
+      if (allProductsCache.length === 0) {
+        list.innerHTML = '<tr><td colspan="6" class="p-12 text-center text-slate-400">등록된 상품이 없습니다.</td></tr>';
+        return;
+      }
+
+      // 현재 필터/검색 조건으로 렌더
+      window.applyProductFilters();
+    }
+  );
+}
+
 
 // =========================================
 // 5. 문의 관리

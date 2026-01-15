@@ -562,14 +562,13 @@ body.admin-mode .admin-only, body.design-mode .design-btn { display: flex !impor
     z-index: 350;
 }
 
-/* 관리자 테이블 개선 - 가로 스크롤 */
-.admin-table-container {
-    overflow-x: auto;
+
+/* 관리자 테이블 개선 - 가로 스크롤 (PC 전용) */
+@media (min-width: 769px) {
+  .admin-table-container { overflow-x: auto; }
+  .admin-table-container table { min-width: 800px; }
 }
 
-.admin-table-container table {
-    min-width: 800px;
-}
 
 /* Lucide 아이콘 초기화 방지 */
 .admin-sidebar-item svg,
@@ -594,5 +593,8 @@ body.admin-mode .admin-only, body.design-mode .design-btn { display: flex !impor
     .order-filter-btn {
         flex: 1;
         min-width: 0;
+    }
+     .admin-table-td { 
+    white-space: normal; 
     }
 }
