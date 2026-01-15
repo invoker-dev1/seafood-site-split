@@ -258,7 +258,10 @@ body.admin-mode .admin-only, body.design-mode .design-btn { display: flex !impor
 }
 .admin-blog-item:hover { box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); }
 
-/* 모바일 카드 뷰 (Responsive Admin) */
+/* ============================================
+   HIGH-DENSITY MOBILE ADMIN UI
+   Operator-focused, compact, professional
+   ============================================ */
 @media (max-width: 768px) {
     .admin-table-container {
         overflow-x: visible;
@@ -277,67 +280,279 @@ body.admin-mode .admin-only, body.design-mode .design-btn { display: flex !impor
         display: block;
     }
 
+    /* ===== COMPACT CARD BASE ===== */
     .admin-table-th { display: none; }
     .admin-table-row {
-        display: flex !important;
-        flex-direction: column;
-        padding: 12px 14px;
-        margin-bottom: 10px;
-        background: white;
-        border-radius: 12px;
-        border: 1px solid #e2e8f0;
-        box-shadow: 0 1px 2px rgba(0,0,0,0.05);
-    }
-    .admin-table-td {
-        padding: 6px 0;
-        border: none;
-        display: flex !important;
-        flex-direction: column;
-        align-items: stretch;
-        width: 100%;
-        white-space: normal;
-        gap: 2px;
-        font-size: 13px;
-    }
-    .admin-table-td:first-child { display: none !important; } /* 체크박스 숨김 */
-
-    .mobile-label {
+        position: relative;
         display: block !important;
-        font-weight: 700;
-        color: #64748b;
-        font-size: 9px;
-        text-transform: uppercase;
-        letter-spacing: 0.6px;
-        margin-bottom: 4px;
-    }
-    .mobile-hide { display: none !important; }
-    .mobile-card-actions {
-        margin-top: 10px;
-        justify-content: flex-end;
-        padding-top: 10px;
-        border-top: 1px solid #f1f5f9;
+        padding: 8px 10px;
+        margin-bottom: 6px;
+        background: white;
+        border-radius: 6px;
+        border: 1px solid #e2e8f0;
+        box-shadow: 0 1px 2px rgba(0,0,0,0.04);
     }
 
-    /* 모바일 카드 내부 요소 크기 축소 */
-    @media (max-width: 768px) {
-        .admin-table-td .flex.items-center.gap-3 {
-            gap: 8px !important;
-        }
-        .admin-table-td .w-9.h-9 {
-            width: 32px !important;
-            height: 32px !important;
-            font-size: 11px !important;
-        }
-        .admin-table-td .font-bold {
-            font-size: 13px !important;
-        }
-        .admin-table-td .text-xs {
-            font-size: 11px !important;
-        }
-        .admin-table-td button {
-            padding: 6px 12px !important;
-            font-size: 12px !important;
-        }
+    /* ===== HIDE UNWANTED ELEMENTS ===== */
+    .mobile-hide { display: none !important; }
+    .mobile-label { display: none !important; }
+
+    /* ===== ACTION BUTTONS: TOP RIGHT ===== */
+    .admin-table-td:last-child,
+    .admin-table-td.mobile-card-actions {
+        position: absolute !important;
+        top: 8px;
+        right: 8px;
+        width: auto !important;
+        padding: 0 !important;
+        border: none !important;
+        margin: 0 !important;
+        z-index: 10;
+    }
+
+    .admin-table-td:last-child .flex {
+        display: flex !important;
+        gap: 4px;
+        align-items: center;
+    }
+
+    .admin-table-td:last-child button {
+        padding: 4px !important;
+        min-width: auto !important;
+        font-size: 0 !important;
+        border-radius: 4px !important;
+        background: #f8fafc !important;
+        border: 1px solid #e2e8f0 !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+    }
+
+    .admin-table-td:last-child button svg,
+    .admin-table-td:last-child button i {
+        width: 14px !important;
+        height: 14px !important;
+        margin: 0 !important;
+    }
+
+    .admin-table-td:last-child button:hover {
+        background: #e2e8f0 !important;
+    }
+
+    /* Primary action button (발송처리 등) */
+    .admin-table-td:last-child button.bg-blue-600,
+    .admin-table-td:last-child button.border-blue-600 {
+        background: #2563eb !important;
+        border-color: #2563eb !important;
+        color: white !important;
+        padding: 4px 8px !important;
+        font-size: 10px !important;
+        font-weight: 600 !important;
+    }
+
+    .admin-table-td:last-child button.bg-white.text-slate-600 {
+        background: white !important;
+        font-size: 10px !important;
+        padding: 4px 8px !important;
+        font-weight: 600 !important;
+    }
+
+    /* ===== CONTENT CELLS ===== */
+    .admin-table-td {
+        padding: 3px 0;
+        padding-right: 80px; /* Space for action buttons */
+        border: none;
+        display: block !important;
+        width: 100%;
+        font-size: 11px;
+        line-height: 1.3;
+    }
+
+    /* ===== 주문관리 SPECIFIC ===== */
+    /* Line 1: 날짜 + 상태 */
+    .admin-table-td:nth-child(2) {
+        display: inline-block !important;
+        width: auto !important;
+        padding-right: 8px !important;
+        color: #94a3b8;
+        font-size: 10px;
+        font-weight: 500;
+    }
+
+    .admin-table-td:nth-child(6) {
+        display: inline-block !important;
+        width: auto !important;
+        padding: 0 !important;
+    }
+
+    .admin-table-td:nth-child(6) .saas-badge {
+        font-size: 9px !important;
+        padding: 2px 6px !important;
+        border-radius: 3px !important;
+        font-weight: 600 !important;
+    }
+
+    /* Line 2: 고객정보 (Primary) */
+    .admin-table-td:nth-child(3) {
+        margin-top: 2px;
+        padding-right: 80px !important;
+    }
+
+    .admin-table-td:nth-child(3) .flex.items-center {
+        display: flex !important;
+        align-items: center;
+        gap: 6px;
+    }
+
+    .admin-table-td:nth-child(3) .w-9.h-9 {
+        width: 20px !important;
+        height: 20px !important;
+        font-size: 9px !important;
+        flex-shrink: 0;
+    }
+
+    .admin-table-td:nth-child(3) .font-bold {
+        font-size: 13px !important;
+        font-weight: 700 !important;
+        color: #0f172a;
+    }
+
+    .admin-table-td:nth-child(3) a {
+        font-size: 10px !important;
+        color: #64748b !important;
+        font-weight: 500;
+    }
+
+    /* Line 3: 배송지 */
+    .admin-table-td:nth-child(4) {
+        margin-top: 3px;
+        font-size: 10px;
+        color: #64748b;
+        font-weight: 500;
+        line-height: 1.3;
+        padding-right: 80px !important;
+    }
+
+    /* Line 4: 주문내역 */
+    .admin-table-td:nth-child(5) {
+        margin-top: 4px;
+        padding-right: 80px !important;
+    }
+
+    .admin-table-td:nth-child(5) .bg-slate-50 {
+        display: block !important;
+        font-size: 10px !important;
+        padding: 5px 6px !important;
+        line-height: 1.3 !important;
+        color: #475569;
+        background: #f8fafc !important;
+        border-radius: 4px !important;
+        border: 1px solid #e2e8f0 !important;
+    }
+
+    /* ===== 상품관리 SPECIFIC ===== */
+    /* 주문관리: 첫 번째 td (체크박스) 숨김 */
+    #admin-order-list .admin-table-td:first-child {
+        display: none !important;
+    }
+
+    /* 상품관리: 첫 번째 td는 이미지, 인라인으로 */
+    #admin-product-list .admin-table-td:first-child {
+        display: inline-block !important;
+        width: auto !important;
+        padding: 0 !important;
+        margin-right: 8px !important;
+        vertical-align: top;
+        padding-right: 0 !important;
+    }
+
+    #admin-product-list .admin-table-td:first-child .w-12.h-12 {
+        width: 40px !important;
+        height: 40px !important;
+        border-radius: 6px !important;
+        display: block !important;
+    }
+
+    /* 상품명 td - 이미지 옆에 인라인 */
+    #admin-product-list .admin-table-td:nth-child(2) {
+        display: inline-block !important;
+        width: calc(100% - 130px) !important;
+        vertical-align: top;
+        padding-right: 0 !important;
+    }
+
+    #admin-product-list .admin-table-td:nth-child(2) > div {
+        display: block !important;
+    }
+
+    #admin-product-list .admin-table-td:nth-child(2) .font-bold {
+        font-size: 13px !important;
+        font-weight: 700 !important;
+        color: #0f172a !important;
+        line-height: 1.3;
+        margin-bottom: 2px;
+        display: block !important;
+    }
+
+    #admin-product-list .admin-table-td:nth-child(2) .text-xs {
+        font-size: 9px !important;
+        color: #94a3b8 !important;
+        display: block !important;
+    }
+
+    /* 카테고리 - 새 줄 */
+    #admin-product-list .admin-table-td:nth-child(3) {
+        margin-top: 6px;
+        display: block !important;
+        padding-right: 80px !important;
+    }
+
+    #admin-product-list .admin-table-td:nth-child(3) span {
+        font-size: 9px !important;
+        padding: 2px 6px !important;
+        border-radius: 3px !important;
+        display: inline-block;
+    }
+
+    /* 가격 - 인라인 */
+    #admin-product-list .admin-table-td:nth-child(4) {
+        display: inline-block !important;
+        margin-left: 8px;
+        padding-right: 0 !important;
+    }
+
+    #admin-product-list .admin-table-td:nth-child(4) .flex.flex-col {
+        display: inline-flex !important;
+        flex-direction: row !important;
+        gap: 6px;
+        align-items: center;
+    }
+
+    #admin-product-list .admin-table-td:nth-child(4) .text-red-500 {
+        font-size: 12px !important;
+        font-weight: 700 !important;
+    }
+
+    #admin-product-list .admin-table-td:nth-child(4) .line-through {
+        font-size: 10px !important;
+    }
+
+    #admin-product-list .admin-table-td:nth-child(4) .font-bold {
+        font-size: 12px !important;
+        font-weight: 700 !important;
+    }
+
+    /* 상태 뱃지 - 인라인 */
+    #admin-product-list .admin-table-td:nth-child(5) {
+        display: inline-block !important;
+        margin-left: 8px;
+        padding-right: 0 !important;
+    }
+
+    #admin-product-list .admin-table-td:nth-child(5) .saas-badge {
+        font-size: 9px !important;
+        padding: 2px 6px !important;
+        border-radius: 3px !important;
     }
 }
 @media (min-width: 769px) { .mobile-label { display: none; } }
