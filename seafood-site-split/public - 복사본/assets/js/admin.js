@@ -486,17 +486,17 @@ function createProductRow(p, id) {
       <!-- ✅ 상태(품절) + 메인노출 인라인 토글 -->
       <td class="admin-table-td">
         <span class="mobile-label">상태</span>
-        <div class="flex flex-col gap-2 items-start">
+        <div class="flex flex-row gap-1.5 items-center flex-wrap">
           <button type="button"
             onclick="window.toggleProductSoldOut('${id}', ${isSoldOut})"
-            class="px-3 py-1.5 rounded-lg text-xs font-bold transition border shadow-sm ${isSoldOut ? 'bg-red-50 text-red-600 border-red-200 hover:bg-red-100' : 'bg-green-50 text-green-700 border-green-200 hover:bg-green-100'}">
+            class="px-2 py-1 rounded text-[10px] font-bold transition border shadow-sm whitespace-nowrap ${isSoldOut ? 'bg-red-50 text-red-600 border-red-200 hover:bg-red-100' : 'bg-green-50 text-green-700 border-green-200 hover:bg-green-100'}">
             ${isSoldOut ? '품절' : '판매중'}
           </button>
 
           <button type="button"
             onclick="window.toggleProductFeatured('${id}', ${isFeatured})"
-            class="px-3 py-1.5 rounded-lg text-xs font-bold transition border shadow-sm ${isFeatured ? 'bg-blue-600 text-white border-blue-600 hover:bg-blue-700' : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'}">
-            ${isFeatured ? '메인노출' : '일반'}
+            class="px-2 py-1 rounded text-[10px] font-bold transition border shadow-sm whitespace-nowrap ${isFeatured ? 'bg-blue-600 text-white border-blue-600 hover:bg-blue-700' : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'}">
+            ${isFeatured ? '메인' : '일반'}
           </button>
         </div>
       </td>
