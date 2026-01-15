@@ -335,21 +335,34 @@ function renderAdminProducts() {
 function renderAdminInquiries() {
     state.adminListeners.inquiriesList = onSnapshot(query(getPublicDataRef(COLLECTIONS.INQUIRIES), orderBy("createdAt", "desc"), limit(50)), (snap) => {
         const list = document.getElementById("admin-inquiry-list");
-        if (snap.empty) { list.innerHTML = '<div class="p-12 text-center text-slate-400">문의 내역이 없습니다.</div>'; return; }
-        
+        if (snap.empty) {
+            list.innerHTML = '<div class="p-12 text-center text-slate-400 flex flex-col items-center gap-4"><i data-lucide="inbox" size="48" class="text-slate-200"></i><p>문의 내역이 없습니다.</p></div>';
+            if(window.lucide) window.lucide.createIcons();
+            return;
+        }
+
         list.innerHTML = snap.docs.map(d => {
             const q = d.data();
+            const hasAnswer = q.answer && q.answer.trim();
             return `
-                <div class="p-4 hover:bg-slate-50 transition cursor-pointer flex justify-between items-center border-b border-slate-50 last:border-0" onclick="window.viewInquiryDetail('${d.id}')">
-                    <div class="flex-1 min-w-0">
-                        <div class="flex items-center gap-3 mb-1">
-                            <span class="font-bold text-sm text-slate-800">${q.name}</span>
-                            <span class="text-xs text-slate-400">${new Date(q.createdAt).toLocaleDateString()}</span>
-                            <span class="saas-badge ${q.answer ? 'saas-badge-green' : 'saas-badge-blue'}">${q.answer ? '답변완료' : '대기중'}</span>
+                <div class="group p-5 hover:bg-slate-50 transition cursor-pointer border-b border-slate-100 last:border-0 rounded-lg hover:shadow-sm" onclick="window.viewInquiryDetail('${d.id}')">
+                    <div class="flex items-start gap-4">
+                        <div class="w-12 h-12 rounded-full bg-gradient-to-br ${hasAnswer ? 'from-green-400 to-green-600' : 'from-blue-400 to-blue-600'} flex items-center justify-center text-white font-bold text-lg shadow-md flex-shrink-0">
+                            ${q.name.substring(0,1)}
                         </div>
-                        <div class="text-sm text-slate-600 truncate">${q.content}</div>
+                        <div class="flex-1 min-w-0">
+                            <div class="flex items-center gap-2 mb-2">
+                                <span class="font-bold text-base text-slate-800">${q.name}</span>
+                                <span class="text-xs text-slate-400">${new Date(q.createdAt).toLocaleString('ko-KR', {month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'})}</span>
+                                <span class="saas-badge ${hasAnswer ? 'saas-badge-green' : 'saas-badge-blue'}">${hasAnswer ? '답변완료' : '답변대기'}</span>
+                            </div>
+                            <div class="text-sm text-slate-600 line-clamp-2 leading-relaxed mb-2">${q.content}</div>
+                            <a href="tel:${q.phone}" class="text-xs text-slate-500 font-mono hover:text-blue-600 inline-flex items-center gap-1" onclick="event.stopPropagation();">
+                                <i data-lucide="phone" size="12"></i> ${q.phone}
+                            </a>
+                        </div>
+                        <i data-lucide="chevron-right" class="text-slate-300 group-hover:text-slate-600 group-hover:translate-x-1 transition-all" size="20"></i>
                     </div>
-                    <i data-lucide="chevron-right" class="text-slate-300" size="20"></i>
                 </div>`;
         }).join('');
         if(window.lucide) window.lucide.createIcons();
@@ -411,17 +424,41 @@ window.viewInquiryDetail = async (id) => {
 function renderAdminNotices() {
     state.adminListeners.noticesList = onSnapshot(query(getPublicDataRef(COLLECTIONS.NOTICES), orderBy("createdAt", "desc")), (snap) => {
         const list = document.getElementById("admin-notice-list");
-        if (snap.empty) { list.innerHTML = '<div class="p-12 text-center text-slate-400">등록된 공지가 없습니다.</div>'; return; }
-        
+        if (snap.empty) {
+            list.innerHTML = '<div class="p-12 text-center text-slate-400 flex flex-col items-center gap-4"><i data-lucide="megaphone" size="48" class="text-slate-200"></i><p>등록된 공지가 없습니다.</p></div>';
+            if(window.lucide) window.lucide.createIcons();
+            return;
+        }
+
         list.innerHTML = snap.docs.map(d => {
             const n = d.data();
+            const isPopup = n.showPopup;
             return `
-                <div class="p-4 hover:bg-slate-50 transition flex justify-between items-center border-b border-slate-50 last:border-0 cursor-pointer group" onclick="window.openNoticeModal('${d.id}')">
-                    <div class="flex-1">
-                        <div class="font-bold text-sm text-slate-800 mb-1 group-hover:text-blue-600 transition">${n.title}</div>
-                        <div class="text-xs text-slate-400 flex items-center gap-1"><i data-lucide="calendar" size="12"></i> ${new Date(n.createdAt).toLocaleDateString()}</div>
+                <div class="group p-5 hover:bg-slate-50 transition border-b border-slate-100 last:border-0 rounded-lg hover:shadow-sm cursor-pointer" onclick="window.openNoticeModal('${d.id}')">
+                    <div class="flex items-start gap-4">
+                        <div class="w-12 h-12 rounded-full ${isPopup ? 'bg-gradient-to-br from-red-400 to-red-600' : 'bg-gradient-to-br from-slate-300 to-slate-500'} flex items-center justify-center text-white shadow-md flex-shrink-0">
+                            <i data-lucide="megaphone" size="20"></i>
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <div class="flex items-center gap-2 mb-2">
+                                <span class="font-bold text-base text-slate-800 group-hover:text-blue-600 transition">${n.title}</span>
+                                ${isPopup ? '<span class="saas-badge saas-badge-red">팝업노출</span>' : ''}
+                            </div>
+                            <div class="text-sm text-slate-600 line-clamp-2 leading-relaxed mb-2">${n.content || ''}</div>
+                            <div class="text-xs text-slate-400 flex items-center gap-1">
+                                <i data-lucide="calendar" size="12"></i>
+                                ${new Date(n.createdAt).toLocaleDateString('ko-KR', {year: 'numeric', month: 'short', day: 'numeric'})}
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <button onclick="event.stopPropagation(); window.openNoticeModal('${d.id}')" class="p-2 text-slate-400 hover:text-blue-600 transition rounded-lg hover:bg-blue-50" title="수정">
+                                <i data-lucide="edit-3" size="16"></i>
+                            </button>
+                            <button onclick="event.stopPropagation(); window.deleteNotice('${d.id}')" class="p-2 text-slate-400 hover:text-red-600 transition rounded-lg hover:bg-red-50" title="삭제">
+                                <i data-lucide="trash-2" size="16"></i>
+                            </button>
+                        </div>
                     </div>
-                    <button onclick="event.stopPropagation(); window.deleteNotice('${d.id}')" class="p-2 text-slate-400 hover:text-red-500 transition rounded-lg hover:bg-red-50"><i data-lucide="trash-2" size="16"></i></button>
                 </div>`;
         }).join('');
         if(window.lucide) window.lucide.createIcons();
@@ -661,11 +698,12 @@ window.registerAnswer = async (id) => {
     const currentText = currentTextEl ? currentTextEl.innerText.trim() : "";
     const isPlaceholder = currentText === "답변 대기중" || currentText === "아직 답변이 등록되지 않았습니다." || currentText === "";
 
-    // [기능 복구] 프롬프트 대신 깔끔한 답변 모달 생성
+    // [기능 복구] 프롬프트 대신 깔끔한 답변 모달 생성 (관리자 대시보드 내부에 추가)
     if(!document.getElementById('answer-modal')) {
         const m = document.createElement('div');
         m.id = 'answer-modal';
-        m.className = 'modal-overlay hidden';
+        m.className = 'absolute inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 hidden';
+        m.style.zIndex = '400'; // 문의 상세 모달(z-300)보다 높게
         m.innerHTML = `
             <div class="bg-white rounded-2xl w-full max-w-lg p-6 shadow-2xl transform transition-all scale-100" onclick="event.stopPropagation()">
                 <h3 class="text-lg font-bold mb-4 text-slate-800">답변 작성</h3>
@@ -675,7 +713,8 @@ window.registerAnswer = async (id) => {
                     <button id="answer-submit-btn" class="px-6 py-2.5 rounded-xl bg-slate-900 text-white font-bold hover:bg-slate-800 text-sm shadow-lg transition">저장하기</button>
                 </div>
             </div>`;
-        document.body.appendChild(m);
+        // 관리자 대시보드 내부에 추가
+        document.getElementById('admin-dashboard').appendChild(m);
 
         // 모달 오버레이 클릭 시 닫기
         document.getElementById('answer-modal').onclick = (e) => {

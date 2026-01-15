@@ -1,6 +1,6 @@
 
 import { signInAnonymously, onAuthStateChanged, signInWithEmailAndPassword, signOut, setPersistence, browserLocalPersistence } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-import { doc, getDoc, addDoc, deleteDoc, query, orderBy, limit, onSnapshot, setDoc, updateDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+import { doc, getDoc, addDoc, deleteDoc, query, orderBy, limit, onSnapshot, setDoc, updateDoc, where, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 import { db, auth, COLLECTIONS, ADMIN_UID, getPublicDataRef, getConfDoc } from "./config.js";
 import { state } from "./state.js";
 import { updateMap, normalizeCategory } from "./utils.js";
@@ -105,7 +105,7 @@ function renderAllMenu() {
     const list = document.getElementById("all-menu-list");
     if (!list) return;
     let filtered = [...state.productCache];
-    if (state.menuFilterCategory !== "all") { filtered = filtered.filter(p => normalizeCategory(p.category) === state.menuFilterCategory); filtered.sort((a, b) => (b.featured - a.featured) || a.name.localeCompare(b.name)); } else { filtered.sort((a, b) => (b.featured - a.featured) || a.name.localeCompare(b.name)); }
+    if (state.menuFilterCategory !== "all") { filtered = filtered.filter(p => normalizeCategory(p.category) === state.menuFilterCategory); filtered.sort((a, b) => (b.featured - a.featured) || a.name.localeCompare(b.name)); } else { filtered = filtered.filter(p => !p.featured); filtered.sort((a, b) => a.name.localeCompare(b.name)); }
 
     if (filtered.length === 0) { list.innerHTML = '<div class="col-span-full p-16 text-center text-slate-400">등록된 메뉴가 없습니다.</div>'; document.getElementById('infinite-scroll-trigger').classList.add('hidden'); return; }
 
@@ -224,9 +224,42 @@ document.getElementById("inquiryForm").onsubmit = async (e) => {
     e.preventDefault(); const phone = document.getElementById("inq-phone").value;
     try { await addDoc(getPublicDataRef(COLLECTIONS.INQUIRIES), { name: document.getElementById("inq-name").value, phone, content: document.getElementById("inq-content").value, answer: null, createdAt: Date.now() }); window.showToast("문의 등록 완료"); e.target.reset(); } catch (e) { window.showToast("오류", 'error'); }
 };
-window.searchInquiries = () => { /* ...existing logic... */ };
+window.searchInquiries = async () => {
+    const name = document.getElementById('search-name').value.trim();
+    const phone = document.getElementById('search-phone').value.trim();
+    if (!name || !phone) return window.showToast("이름과 연락처를 모두 입력해주세요", "error");
+
+    const q = query(getPublicDataRef(COLLECTIONS.INQUIRIES), where("name", "==", name), where("phone", "==", phone));
+    const snap = await getDocs(q);
+
+    if (snap.empty) {
+        window.showToast("일치하는 문의를 찾을 수 없습니다", "error");
+        return;
+    }
+
+    document.getElementById('search-result-area').classList.remove('hidden');
+    document.getElementById('inquiry-list').innerHTML = snap.docs.map(d => {
+        const data = d.data();
+        return `<div class="p-3 bg-slate-50 rounded-lg cursor-pointer hover:bg-slate-100 transition" onclick="window.viewInquiryDetailUser('${d.id}')">
+            <div class="font-bold text-sm">${data.content.substring(0, 50)}${data.content.length > 50 ? '...' : ''}</div>
+            <div class="text-xs text-slate-400 mt-1">${new Date(data.createdAt).toLocaleDateString()} · ${data.answer ? '답변완료' : '답변대기'}</div>
+        </div>`;
+    }).join('');
+};
 window.openInquirySearch = () => { document.getElementById('search-result-area').classList.add('hidden'); document.getElementById('inquiry-list').innerHTML = ''; document.getElementById('search-name').value = ''; document.getElementById('search-phone').value = ''; document.getElementById('inquiry-search-modal').classList.remove('hidden'); };
-window.viewInquiryDetail = async (id) => { const s = await getDoc(doc(getPublicDataRef(COLLECTIONS.INQUIRIES), id)); if (!s.exists()) return; const d = s.data(); document.getElementById("inquiry-detail-content").innerHTML = `<h3 class="text-xl font-bold mb-4">문의 내용</h3><div class="bg-slate-50 p-4 rounded-xl mb-6 text-sm whitespace-pre-wrap text-slate-700 border border-slate-100">${d.content}</div><h3 class="text-xl font-bold mb-4 text-blue-600">관리자 답변</h3><div id="inquiry-answer-text-${id}" class="bg-blue-50 p-4 rounded-xl text-sm whitespace-pre-wrap border border-blue-100 min-h-[100px]">${d.answer ? d.answer : '<span class="text-slate-400">답변 대기중</span>'}</div>${state.isAdmin ? `<div class="mt-4 flex gap-2"><button onclick="window.registerAnswer('${id}')" class="flex-1 bg-blue-600 text-white py-2 rounded text-xs font-bold">답변 등록</button><button onclick="window.deleteInquiry('${id}')" class="flex-1 bg-red-100 text-red-600 py-2 rounded text-xs font-bold">삭제</button></div>` : ''}`; document.getElementById("inquiry-detail-modal").classList.remove("hidden"); };
+// 이용자용 문의 상세보기 (관리자는 admin.js의 viewInquiryDetail 사용)
+window.viewInquiryDetailUser = async (id) => {
+    const s = await getDoc(doc(getPublicDataRef(COLLECTIONS.INQUIRIES), id));
+    if (!s.exists()) return;
+    const d = s.data();
+    document.getElementById("inquiry-detail-content").innerHTML = `
+        <h3 class="text-xl font-bold mb-4">문의 내용</h3>
+        <div class="bg-slate-50 p-4 rounded-xl mb-6 text-sm whitespace-pre-wrap text-slate-700 border border-slate-100">${d.content}</div>
+        <h3 class="text-xl font-bold mb-4 text-blue-600">관리자 답변</h3>
+        <div class="bg-blue-50 p-4 rounded-xl text-sm whitespace-pre-wrap border border-blue-100 min-h-[100px]">${d.answer ? d.answer : '<span class="text-slate-400">답변 대기중</span>'}</div>
+    `;
+    document.getElementById("inquiry-detail-modal").classList.remove("hidden");
+};
 window.deleteInquiry = async (id) => { if (confirm("삭제?")) { await deleteDoc(doc(getPublicDataRef(COLLECTIONS.INQUIRIES), id)); document.getElementById("inquiry-detail-modal").classList.add("hidden"); window.showToast("삭제됨"); } };
 
 // ---------- 공지사항 ----------

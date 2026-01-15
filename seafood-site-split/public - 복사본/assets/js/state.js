@@ -9,6 +9,7 @@ export const state = {
     productCache: [],     // 상품 목록 캐시
     orderCache: [],       // (사용 안 함 - 실시간 리스너 사용)
     configCategories: [], // 카테고리 목록 캐시
+    noticeCache: [],      // 공지사항 목록 캐시
 
     // 3. UI 상태 관리
     currentCart: [],          // 장바구니 내용 (LocalStorage와 동기화)
