@@ -281,36 +281,64 @@ body.admin-mode .admin-only, body.design-mode .design-btn { display: flex !impor
     .admin-table-row {
         display: flex !important;
         flex-direction: column;
-        padding: 20px;
-        margin-bottom: 16px;
+        padding: 12px 14px;
+        margin-bottom: 10px;
         background: white;
-        border-radius: 16px;
+        border-radius: 12px;
         border: 1px solid #e2e8f0;
         box-shadow: 0 1px 2px rgba(0,0,0,0.05);
     }
     .admin-table-td {
-        padding: 8px 0;
+        padding: 6px 0;
         border: none;
-        display: flex;
-        justify-content: space-between;
-        align-items: flex-start;
+        display: flex !important;
+        flex-direction: column;
+        align-items: stretch;
         width: 100%;
         white-space: normal;
+        gap: 2px;
+        font-size: 13px;
     }
-    .admin-table-td:first-child { display: none; } /* 체크박스 숨김 */
+    .admin-table-td:first-child { display: none !important; } /* 체크박스 숨김 */
 
     .mobile-label {
-        display: inline-block;
+        display: block !important;
         font-weight: 700;
         color: #64748b;
-        margin-right: 12px;
-        font-size: 11px;
-        min-width: 70px;
+        font-size: 9px;
         text-transform: uppercase;
-        letter-spacing: 0.5px;
+        letter-spacing: 0.6px;
+        margin-bottom: 4px;
     }
     .mobile-hide { display: none !important; }
-    .mobile-card-actions { margin-top: 12px; justify-content: flex-end; padding-top: 12px; border-top: 1px solid #f1f5f9; }
+    .mobile-card-actions {
+        margin-top: 10px;
+        justify-content: flex-end;
+        padding-top: 10px;
+        border-top: 1px solid #f1f5f9;
+    }
+
+    /* 모바일 카드 내부 요소 크기 축소 */
+    @media (max-width: 768px) {
+        .admin-table-td .flex.items-center.gap-3 {
+            gap: 8px !important;
+        }
+        .admin-table-td .w-9.h-9 {
+            width: 32px !important;
+            height: 32px !important;
+            font-size: 11px !important;
+        }
+        .admin-table-td .font-bold {
+            font-size: 13px !important;
+        }
+        .admin-table-td .text-xs {
+            font-size: 11px !important;
+        }
+        .admin-table-td button {
+            padding: 6px 12px !important;
+            font-size: 12px !important;
+        }
+    }
 }
 @media (min-width: 769px) { .mobile-label { display: none; } }
 

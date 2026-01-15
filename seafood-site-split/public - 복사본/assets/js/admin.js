@@ -513,7 +513,14 @@ function renderAdminSettings() {
 }
 
 window.saveAdminSettings = async () => {
+    console.log('saveAdminSettings 호출됨');
     const form = document.getElementById('admin-settings-form');
+    if (!form) {
+        console.error('설정 폼을 찾을 수 없습니다');
+        window.showToast("오류: 설정 폼을 찾을 수 없습니다");
+        return;
+    }
+
     const data = {
         storeName: form.storeName.value,
         ownerName: form.ownerName.value,
@@ -524,9 +531,18 @@ window.saveAdminSettings = async () => {
         bankNumber: form.bankNumber.value,
         bankOwner: form.bankOwner.value
     };
-    await setDoc(getConfDoc(), data, { merge: true });
-    window.showToast("설정이 저장되었습니다.");
-    location.reload(); 
+
+    console.log('저장할 데이터:', data);
+
+    try {
+        await setDoc(getConfDoc(), data, { merge: true });
+        console.log('저장 성공');
+        window.showToast("설정이 저장되었습니다.");
+        setTimeout(() => location.reload(), 500);
+    } catch (error) {
+        console.error('설정 저장 오류:', error);
+        window.showToast("저장 실패: " + error.message);
+    }
 };
 
 // [기능 복구] 동적 에디터 생성 로직
