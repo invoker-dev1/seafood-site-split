@@ -43,3 +43,8 @@ export const getPublicDataRef = (col) => collection(db, "artifacts", appId, "pub
 // 경로: artifacts -> [appId] -> public -> data -> storeConfig -> main
 // 주의: 데이터베이스의 storeConfig 안에 문서 ID가 반드시 "main"이어야 합니다.
 export const getConfDoc = () => doc(db, "artifacts", appId, "public", "data", COLLECTIONS.CONFIG, "main");
+
+// Telegram 알림 Worker URL
+export const TELEGRAM_WORKER_URL = "https://dg-telegram-bot.dev-jakehan.workers.dev";
+
+

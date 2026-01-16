@@ -1,7 +1,7 @@
 
 import { signInAnonymously, onAuthStateChanged, signInWithEmailAndPassword, signOut, setPersistence, browserLocalPersistence } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
 import { doc, getDoc, addDoc, deleteDoc, query, orderBy, limit, onSnapshot, setDoc, updateDoc, where, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-import { db, auth, COLLECTIONS, ADMIN_UID, getPublicDataRef, getConfDoc } from "./config.js";
+import { db, auth, COLLECTIONS, ADMIN_UID, getPublicDataRef, getConfDoc, TELEGRAM_WORKER_URL } from "./config.js";
 import { state } from "./state.js";
 import { updateMap, normalizeCategory } from "./utils.js";
 import "./admin.js"; // 관리자 기능 로드
@@ -215,14 +215,84 @@ window.deleteComment = async (cid) => { if (confirm("삭제?")) await deleteDoc(
 
 // ---------- Forms ----------
 document.getElementById("orderForm").onsubmit = async (e) => {
-    e.preventDefault(); const phone = document.getElementById("order-phone").value;
-    if (!/^[0-9]{2,3}-?[0-9]{3,4}-?[0-9]{4}$/.test(phone)) return window.showToast("연락처 오류", "error");
-    const btn = document.getElementById("submitBtn"); btn.disabled = true; btn.innerText = "전송 중...";
-    try { await addDoc(getPublicDataRef(COLLECTIONS.ORDERS), { name: document.getElementById("order-name").value, phone, address: document.getElementById("order-address").value, product: document.getElementById("order-product").value, status: 'new', createdAt: Date.now() }); document.getElementById("order-success-modal").classList.remove("hidden"); btn.disabled = false; btn.innerText = "주문 전송하기"; state.currentCart = []; updateCartUI(); } catch (e) { window.showToast("오류 발생", 'error'); btn.disabled = false; }
+  e.preventDefault();
+  const phone = document.getElementById("order-phone").value;
+  if (!/^[0-9]{2,3}-?[0-9]{3,4}-?[0-9]{4}$/.test(phone)) return window.showToast("연락처 오류", "error");
+
+  const btn = document.getElementById("submitBtn");
+  btn.disabled = true;
+  btn.innerText = "전송 중...";
+
+  // 1) 주문 데이터 준비 (한 번만 만들기)
+  const orderPayload = {
+    name: document.getElementById("order-name").value,
+    phone,
+    address: document.getElementById("order-address").value,
+    product: document.getElementById("order-product").value,
+    status: "new",
+    createdAt: Date.now(),
+  };
+
+  try {
+    // 2) Firestore 저장(기존 로직 유지)
+    await addDoc(getPublicDataRef(COLLECTIONS.ORDERS), orderPayload);
+
+    // 3) 텔레그램 알림(실패해도 주문 저장은 유지)
+    fetch(TELEGRAM_WORKER_URL, {
+  method: "POST",
+  body: JSON.stringify({
+    type: "order",
+    name: document.getElementById("order-name").value,
+    phone,
+    address: document.getElementById("order-address").value,
+    product: document.getElementById("order-product").value,
+  }),
+}).catch(() => {});
+
+    // 4) 성공 UI(기존 로직 유지)
+    document.getElementById("order-success-modal").classList.remove("hidden");
+    btn.disabled = false;
+    btn.innerText = "주문 전송하기";
+    state.currentCart = [];
+    updateCartUI();
+  } catch (e) {
+    window.showToast("오류 발생", "error");
+    btn.disabled = false;
+  }
 };
+
 document.getElementById("inquiryForm").onsubmit = async (e) => {
-    e.preventDefault(); const phone = document.getElementById("inq-phone").value;
-    try { await addDoc(getPublicDataRef(COLLECTIONS.INQUIRIES), { name: document.getElementById("inq-name").value, phone, content: document.getElementById("inq-content").value, answer: null, createdAt: Date.now() }); window.showToast("문의 등록 완료"); e.target.reset(); } catch (e) { window.showToast("오류", 'error'); }
+    e.preventDefault();
+    const name = document.getElementById("inq-name").value;
+    const phone = document.getElementById("inq-phone").value;
+    const content = document.getElementById("inq-content").value;
+
+    try {
+        // Firebase에 문의 등록
+        await addDoc(getPublicDataRef(COLLECTIONS.INQUIRIES), {
+            name,
+            phone,
+            content,
+            answer: null,
+            createdAt: Date.now()
+        });
+
+        // 텔레그램 알림 전송
+        fetch(TELEGRAM_WORKER_URL, {
+            method: "POST",
+            body: JSON.stringify({
+                type: "inquiry",
+                name,
+                phone,
+                message: content
+            })
+        }).catch(() => {});
+
+        window.showToast("문의 등록 완료");
+        e.target.reset();
+    } catch (e) {
+        window.showToast("오류", 'error');
+    }
 };
 window.searchInquiries = async () => {
     const name = document.getElementById('search-name').value.trim();
@@ -291,23 +361,117 @@ window.openNoticePopup = (id) => {
     document.getElementById('notice-popup-modal').classList.remove('hidden');
 };
 
+// ---------- Settings Tab Switcher ----------
+window.switchSettingsTab = (tabName) => {
+    // 모든 탭 버튼 비활성화
+    document.querySelectorAll('.settings-tab-btn').forEach(btn => {
+        btn.classList.remove('active', 'border-blue-600', 'text-blue-600', 'bg-blue-50');
+        btn.classList.add('text-slate-600');
+    });
+
+    // 모든 탭 컨텐츠 숨김
+    document.querySelectorAll('.settings-tab-content').forEach(content => {
+        content.classList.add('hidden');
+    });
+
+    // 선택한 탭 버튼 활성화
+    const activeBtn = document.querySelector(`.settings-tab-btn[data-tab="${tabName}"]`);
+    if (activeBtn) {
+        activeBtn.classList.add('active', 'border-blue-600', 'text-blue-600', 'bg-blue-50');
+        activeBtn.classList.remove('text-slate-600');
+    }
+
+    // 선택한 탭 컨텐츠 표시
+    const activeContent = document.getElementById(`settings-tab-${tabName}`);
+    if (activeContent) {
+        activeContent.classList.remove('hidden');
+    }
+
+    // 아이콘 재렌더링
+    if (window.lucide) window.lucide.createIcons();
+};
+
 // ---------- Auth & Init ----------
 window.toggleDesignMode = () => { state.isDesignMode = !state.isDesignMode; document.body.classList.toggle("design-mode", state.isDesignMode); window.showToast(state.isDesignMode ? "디자인 모드 ON" : "디자인 모드 OFF"); };
 window.handleEdit = async (f, l) => { if (!state.isDesignMode) return; const v = prompt(`${l} 수정:`); if (v) { await setDoc(getConfDoc(), { [f]: v }, { merge: true }); if (f === "address") updateMap(v); } };
 window.openLoginModal = () => state.isAdmin ? window.openAdminDashboard() : document.getElementById("login-modal").classList.remove("hidden");
-window.tryLogin = async () => { try { await setPersistence(auth, browserLocalPersistence); const u = await signInWithEmailAndPassword(auth, document.getElementById("admin-id").value, document.getElementById("admin-pw").value); if (u.user.uid !== ADMIN_UID) throw new Error(); state.isAdmin = true; document.body.classList.add("admin-mode"); document.getElementById("login-modal").classList.add("hidden"); window.openAdminDashboard(); } catch (e) { window.showToast("로그인 실패", 'error'); } };
-window.exitAdminMode = async () => { state.isAdmin = false; document.body.classList.remove("admin-mode"); await signOut(auth); await signInAnonymously(auth); window.closeAdminDashboard(); window.showToast("종료"); };
+window.tryLogin = async () => {
+    try {
+        await setPersistence(auth, browserLocalPersistence);
+        const email = document.getElementById("admin-id").value;
+        const password = document.getElementById("admin-pw").value;
+        const autoLogin = document.getElementById("auto-login-check").checked;
+
+        const u = await signInWithEmailAndPassword(auth, email, password);
+        if (u.user.uid !== ADMIN_UID) throw new Error();
+
+        // 자동 로그인 체크 시 로컬스토리지에 저장
+        if (autoLogin) {
+            localStorage.setItem('adminAutoLogin', JSON.stringify({ email, password }));
+        } else {
+            localStorage.removeItem('adminAutoLogin');
+        }
+
+        state.isAdmin = true;
+        document.body.classList.add("admin-mode");
+        document.getElementById("login-modal").classList.add("hidden");
+        window.openAdminDashboard();
+    } catch (e) {
+        window.showToast("로그인 실패", 'error');
+    }
+};
+window.exitAdminMode = async () => {
+    state.isAdmin = false;
+    document.body.classList.remove("admin-mode");
+    localStorage.removeItem('adminAutoLogin');
+    sessionStorage.removeItem('dashboardOpened');
+    await signOut(auth);
+    await signInAnonymously(auth);
+    window.closeAdminDashboard();
+    window.showToast("로그아웃 완료");
+};
 
 const init = async () => {
     window.navigate(window.location.hash.slice(1) || 'main', false);
     setTimeout(() => document.getElementById("app-loader").classList.add("loader-hidden"), 2000);
     if(window.lucide) window.lucide.createIcons();
-    
+
     try { state.currentCart = JSON.parse(localStorage.getItem('seafoodCart')) || []; updateCartUI(); } catch (e) { state.currentCart = []; }
 
-    try { await signInAnonymously(auth); } catch (e) {}
+    // 자동 로그인 시도
+    const autoLoginData = localStorage.getItem('adminAutoLogin');
+    if (autoLoginData) {
+        try {
+            const { email, password } = JSON.parse(autoLoginData);
+            await setPersistence(auth, browserLocalPersistence);
+            await signInWithEmailAndPassword(auth, email, password);
+            // 로그인 성공 시 onAuthStateChanged에서 처리됨
+        } catch (e) {
+            // 자동 로그인 실패 시 저장된 정보 삭제
+            localStorage.removeItem('adminAutoLogin');
+            try { await signInAnonymously(auth); } catch (e) {}
+        }
+    } else {
+        try { await signInAnonymously(auth); } catch (e) {}
+    }
+
     onAuthStateChanged(auth, (u) => {
-        if (u && u.uid === ADMIN_UID) { state.isAdmin = true; document.body.classList.add("admin-mode"); }
+        if (u && u.uid === ADMIN_UID) {
+            state.isAdmin = true;
+            document.body.classList.add("admin-mode");
+            // 페이지 로드 후 자동으로 대시보드 열기 (자동 로그인 시)
+            const autoLogin = localStorage.getItem('adminAutoLogin');
+            if (autoLogin && !sessionStorage.getItem('dashboardOpened')) {
+                sessionStorage.setItem('dashboardOpened', 'true');
+                setTimeout(() => {
+                    window.openAdminDashboard();
+                    window.showToast("자동 로그인 완료", "success");
+                }, 1000);
+            }
+        } else {
+            state.isAdmin = false;
+            document.body.classList.remove("admin-mode");
+        }
         if (!u) return;
 
         onSnapshot(getConfDoc(), (s) => {
@@ -315,28 +479,51 @@ const init = async () => {
             const d = s.data();
             state.configCategories = d.categories || [];
 
-            // 1. 로고 이미지 처리
+            // 1. 로고 이미지 처리 (logoUrl 사용)
             const logoImg = document.getElementById("logo-img-display");
             const logoIcon = document.getElementById("logo-icon-display");
-            if (d.logo) {
-                if(logoImg) { logoImg.src = d.logo; logoImg.classList.remove("hidden"); }
+            if (d.logoUrl || d.logo) {
+                const logoSrc = d.logoUrl || d.logo;
+                if(logoImg) { logoImg.src = logoSrc; logoImg.classList.remove("hidden"); }
                 if(logoIcon) logoIcon.classList.add("hidden");
             } else {
                 if(logoImg) logoImg.classList.add("hidden");
                 if(logoIcon) logoIcon.classList.remove("hidden");
             }
 
-            // 2. 텍스트 필드 매핑 및 관리자 헤더 동기화
+            // 2. 메인 배너 이미지 처리 (mainBannerUrl 사용)
+            const heroSection = document.getElementById("hero-section");
+            if (d.mainBannerUrl) {
+                if (heroSection) heroSection.style.backgroundImage = `url('${d.mainBannerUrl}')`;
+            } else if (d.heroImage) {
+                // 기존 heroImage 필드도 호환
+                if (heroSection) heroSection.style.backgroundImage = `url('${d.heroImage}')`;
+            }
+
+            // 3. 메인 캐치프레이즈 처리 (mainTitle, mainSubtitle, mainDesc 우선, 없으면 기존 필드명 호환)
+            const heroTitle = document.getElementById("hero-title-display");
+            const heroSubtitle = document.getElementById("hero-subtitle-display");
+            const heroDesc = document.getElementById("hero-desc-display");
+            if (heroTitle) {
+                heroTitle.innerText = d.mainTitle || d.heroTitle || heroTitle.innerText;
+            }
+            if (heroSubtitle) {
+                heroSubtitle.innerText = d.mainSubtitle || d.heroSubtitle || heroSubtitle.innerText;
+            }
+            if (heroDesc) {
+                heroDesc.innerText = d.mainDesc || d.heroDesc || heroDesc.innerText;
+            }
+
+            // 4. 텍스트 필드 매핑 및 관리자 헤더 동기화
             if (d.storeName) {
                 document.getElementById("footer-logo-text").innerText = d.storeName;
                 const adminHeader = document.getElementById("admin-header-title");
                 if(adminHeader) adminHeader.innerText = d.storeName + " Manager";
             }
-            if (d.heroImage) document.getElementById("hero-section").style.backgroundImage = `url('${d.heroImage}')`;
             if (d.address) updateMap(d.address);
-            
-            const fields = ["storeName", "heroTitle", "heroSubtitle", "heroDesc", "bankInfo", "bankOwner", "bankName", "bankNumber", "address", "footerDesc", "csPhone", "ownerName", "bizNum", "saleNum", "email", "orderTitle", "orderContent", "bizHours", "orderFormTitle"];
-            const getFieldId = (f) => ({ storeName: "store-name-display", heroTitle: "hero-title-display", heroSubtitle: "hero-subtitle-display", heroDesc: "hero-desc-display", bankInfo: "bank-info-display", bankOwner: "bank-owner-display", bankName: "bank-name-display", bankNumber: "bank-number-display", address: "address-display", footerDesc: "footer-desc", csPhone: "cs-phone", ownerName: "owner-name", bizNum: "biz-num", saleNum: "sale-num", email: "email-addr", orderTitle: "order-title-display", orderContent: "order-content-display", bizHours: "biz-hours", orderFormTitle: "order-form-title-display" }[f] || "store-name-display");
+
+            const fields = ["storeName", "bankInfo", "bankOwner", "bankName", "bankNumber", "address", "footerDesc", "csPhone", "ownerName", "bizNum", "saleNum", "email", "orderTitle", "orderContent", "bizHours", "orderFormTitle"];
+            const getFieldId = (f) => ({ storeName: "store-name-display", bankInfo: "bank-info-display", bankOwner: "bank-owner-display", bankName: "bank-name-display", bankNumber: "bank-number-display", address: "address-display", footerDesc: "footer-desc", csPhone: "cs-phone", ownerName: "owner-name", bizNum: "biz-num", saleNum: "sale-num", email: "email-addr", orderTitle: "order-title-display", orderContent: "order-content-display", bizHours: "biz-hours", orderFormTitle: "order-form-title-display" }[f] || "store-name-display");
             fields.forEach(f => { if (d[f]) { const el = document.getElementById(getFieldId(f)); if (el) el.innerText = d[f]; } });
 
             renderAllMenu(); renderCategoryTabs();

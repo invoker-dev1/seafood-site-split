@@ -90,13 +90,12 @@ function renderAdminHome() {
 }
 
 // =========================================
-// 3. 주문 관리 (Advanced Features 복구)
+// 3. 주문 관리 (SaaS Style Remastered)
 // =========================================
 
 let allOrdersCache = []; // 로컬 검색/필터용 캐시
 
 function renderOrdersToolbar() {
-    // 툴바 컨테이너 찾기 또는 생성
     const tableContainer = document.querySelector('#admin-orders .admin-table-container');
     let toolbar = document.getElementById('order-toolbar');
     
@@ -124,55 +123,172 @@ function renderOrdersToolbar() {
     }
 }
 
+// [수정됨] 주문 관리 목록 생성 (중복 해결을 위해 md:hidden 추가)
 function createOrderRow(o) {
-    const dateStr = new Date(o.createdAt).toLocaleString('ko-KR', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+    const dateObj = new Date(o.createdAt);
+    // 모바일용 날짜 포맷 (MM월 DD일 HH:mm)
+    const dateMobile = `${(dateObj.getMonth() + 1).toString().padStart(2, '0')}월 ${dateObj.getDate().toString().padStart(2, '0')}일 ${dateObj.getHours().toString().padStart(2, '0')}:${dateObj.getMinutes().toString().padStart(2, '0')}`;
+    const datePC = dateObj.toLocaleDateString('ko-KR', { month: '2-digit', day: '2-digit' }) + ' ' + dateObj.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit', hour12: false });
+
+    const productRaw = String(o.product || '');
+    const addressRaw = String(o.address || '-');
+    const name = String(o.name || '-');
+    const phone = String(o.phone || '');
+    const initial = name ? name.substring(0, 1) : '-';
+    const isNew = o.status === 'new';
     
-    // [디자인 적용] admin-table-row, saas-badge 등 새로운 클래스 적용
+    // 스타일 클래스
+    const rowClass = isNew ? 'order-new-highlight' : '';
+    const avatarClass = isNew ? 'bg-blue-100 text-blue-600' : 'bg-slate-100 text-slate-500';
+    const statusText = isNew ? '신규주문' : '처리완료';
+    const statusBadge = isNew ? 'saas-badge-blue' : 'saas-badge-gray';
+
+    // HTML 반환: PC용 TD들과 모바일용 카드 컨테이너를 함께 포함
+    // [중요] order-mobile-card-cell에 'md:hidden' 클래스 추가하여 PC에서 확실히 숨김
     return `
-        <tr class="admin-table-row group" id="row-${o.id}">
-            <td class="admin-table-td w-10 mobile-hide text-center">
-                <input type="checkbox" class="order-checkbox w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer" value="${o.id}" onchange="window.toggleBulkBtn()">
+        <tr class="admin-table-row ${rowClass}" id="row-${o.id}">
+
+            <!-- [PC 전용 컬럼들] md 이상에서만 표시 (CSS desktop-only-cell로 제어됨) -->
+            <td class="order-pc-col w-12 text-center desktop-only-cell" onclick="event.stopPropagation()">
+                <input type="checkbox" class="order-checkbox w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500" value="${o.id}" onchange="window.toggleBulkBtn()" />
             </td>
-            <td class="admin-table-td">
-                <span class="mobile-label">접수일시</span>
-                <span class="text-slate-500 font-mono text-xs">${dateStr}</span>
-            </td>
-            <td class="admin-table-td">
-                <span class="mobile-label">고객정보</span>
+
+            <td class="order-pc-col w-32 font-numeric text-slate-600 font-bold text-xs desktop-only-cell">${datePC}</td>
+
+            <td class="order-pc-col desktop-only-cell">
                 <div class="flex items-center gap-3">
-                    <div class="w-9 h-9 rounded-full bg-slate-100 flex items-center justify-center text-xs font-bold text-slate-500 border border-slate-200 flex-shrink-0">${o.name.substring(0, 1)}</div>
-                    <div>
-                        <div class="font-bold text-slate-800 text-sm">${o.name}</div>
-                        <a href="tel:${o.phone}" class="text-xs text-slate-400 font-mono hover:text-blue-600">${o.phone}</a>
+                    <div class="w-8 h-8 rounded-full ${avatarClass} flex items-center justify-center text-xs font-bold shrink-0">${initial}</div>
+                    <div class="flex flex-col">
+                        <span class="text-sm font-bold text-slate-800 leading-none mb-0.5">${name}</span>
+                        <span class="text-xs text-slate-400 font-numeric">${phone}</span>
                     </div>
                 </div>
             </td>
-            <td class="admin-table-td">
-                <span class="mobile-label">배송지</span>
-                <div class="text-xs text-slate-600 font-medium break-keep leading-snug">${o.address}</div>
+
+            <td class="order-pc-col desktop-only-cell">
+                <div class="text-xs text-slate-600 truncate max-w-[180px]" title="${addressRaw}">${addressRaw}</div>
             </td>
-            <td class="admin-table-td w-full md:w-auto">
-                <span class="mobile-label">주문내역</span>
-                <div class="text-xs text-slate-600 bg-slate-50 p-2.5 rounded-lg border border-slate-100 whitespace-pre-wrap leading-relaxed">${o.product}</div>
+
+            <td class="order-pc-col desktop-only-cell">
+                <div class="text-xs font-bold text-slate-700 truncate max-w-[200px]" title="${productRaw}">${productRaw}</div>
             </td>
-            <td class="admin-table-td text-center">
-                <span class="mobile-label">상태</span>
-                <span class="saas-badge ${o.status === 'new' ? 'saas-badge-blue' : 'saas-badge-gray'}">${o.status === 'new' ? '신규주문' : '처리완료'}</span>
+
+            <td class="order-pc-col text-center w-20 desktop-only-cell">
+                <span class="saas-badge ${statusBadge}">${statusText}</span>
             </td>
-            <td class="admin-table-td text-right mobile-card-actions">
-                <div class="flex items-center justify-end gap-2">
-                    <button onclick="window.updateOrderStatus('${o.id}', '${o.status === 'new' ? 'done' : 'new'}')" class="px-3 py-1.5 rounded-lg text-xs font-bold transition border shadow-sm ${o.status==='new' ? 'bg-blue-600 text-white border-blue-600 hover:bg-blue-700' : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'}">
-                        ${o.status==='new' ? '발송처리' : '취소'}
+
+            <td class="order-pc-col text-right desktop-only-cell" onclick="event.stopPropagation()">
+                <div class="flex items-center justify-end gap-1">
+                    <button onclick="window.viewOrderDetail('${o.id}')" class="btn-saas-icon text-slate-400 hover:text-blue-600" title="상세"><i data-lucide="file-text" size="15"></i></button>
+                    <button onclick="window.updateOrderStatus('${o.id}', '${isNew ? 'done' : 'new'}')" class="btn-saas-icon ${isNew ? 'text-blue-600 bg-blue-50 hover:bg-blue-100' : 'text-slate-400 hover:text-slate-600'}" title="상태변경">
+                        <i data-lucide="${isNew ? 'check' : 'rotate-ccw'}" size="15"></i>
                     </button>
-                    <button onclick="window.deleteOrder('${o.id}')" class="p-2 rounded-lg text-slate-400 hover:bg-red-50 hover:text-red-500 transition border border-transparent hover:border-red-100" title="삭제"><i data-lucide="trash-2" size="16"></i></button>
+                    <button onclick="window.deleteOrder('${o.id}')" class="btn-saas-icon text-slate-400 hover:text-red-600" title="삭제"><i data-lucide="trash-2" size="15"></i></button>
+                </div>
+            </td>
+
+            <!-- [모바일 전용 카드] md 미만에서만 표시 (md:hidden 추가로 PC 노출 차단) -->
+            <td class="order-mobile-card-cell md:hidden">
+                <div class="mobile-order-card">
+                    <div class="card-header ${isNew ? 'bg-blue-50/50' : 'bg-slate-50/50'}">
+                        <span class="date font-numeric"><i data-lucide="calendar" size="12"></i> ${dateMobile}</span>
+                        <span class="saas-badge ${statusBadge}">${statusText}</span>
+                    </div>
+                    <div class="card-body" onclick="window.viewOrderDetail('${o.id}')">
+                        <div class="info-row main-info">
+                            <span class="name">${name}</span>
+                            <a href="tel:${phone}" class="phone font-numeric" onclick="event.stopPropagation()">${phone}</a>
+                        </div>
+                        <div class="info-row address-info">
+                            <i data-lucide="map-pin" size="13" class="icon"></i>
+                            <span class="text">${addressRaw}</span>
+                        </div>
+                        <div class="info-row product-info">
+                            <i data-lucide="box" size="13" class="icon"></i>
+                            <span class="text">${productRaw}</span>
+                        </div>
+                    </div>
+                    <div class="card-footer">
+                        <button onclick="window.viewOrderDetail('${o.id}')" class="btn-footer">상세보기</button>
+                        <div class="divider"></div>
+                        <button onclick="window.updateOrderStatus('${o.id}', '${isNew ? 'done' : 'new'}')" class="btn-footer ${isNew ? 'text-blue-600 font-bold' : 'text-slate-500'}">
+                            ${isNew ? '발송처리' : '미처리로 변경'}
+                        </button>
+                        <div class="divider"></div>
+                        <button onclick="window.deleteOrder('${o.id}')" class="btn-footer text-red-500">삭제</button>
+                    </div>
                 </div>
             </td>
         </tr>`;
 }
 
+// 주문 상세보기 모달
+window.viewOrderDetail = (orderId) => {
+    const order = allOrdersCache.find(o => o.id === orderId);
+    if (!order) return;
+
+    const dateStr = new Date(order.createdAt).toLocaleString('ko-KR');
+
+    const modalHTML = `
+        <div class="modal-overlay" onclick="this.remove()">
+            <div class="modal-content-saas" onclick="event.stopPropagation()">
+                <div class="modal-header-saas">
+                    <h3 class="modal-title-saas">주문 상세정보</h3>
+                    <button onclick="this.closest('.modal-overlay').remove()" class="modal-close-saas">
+                        <i data-lucide="x" size="20"></i>
+                    </button>
+                </div>
+                <div class="modal-body-saas">
+                    <div class="detail-row">
+                        <span class="detail-label">주문번호</span>
+                        <span class="detail-value font-numeric text-slate-500">${order.id.substring(0,8)}...</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">접수일시</span>
+                        <span class="detail-value font-numeric">${dateStr}</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">고객명</span>
+                        <span class="detail-value">${order.name}</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">연락처</span>
+                        <span class="detail-value">
+                            <a href="tel:${order.phone}" class="detail-link font-numeric">${order.phone}</a>
+                        </span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">배송지</span>
+                        <span class="detail-value leading-snug">${order.address}</span>
+                    </div>
+                    <div class="detail-row detail-row-full">
+                        <span class="detail-label">주문내역</span>
+                        <pre class="detail-product">${order.product}</pre>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">상태</span>
+                        <span class="saas-badge ${order.status === 'new' ? 'saas-badge-blue' : 'saas-badge-gray'}">
+                            ${order.status === 'new' ? '신규주문' : '처리완료'}
+                        </span>
+                    </div>
+                </div>
+                <div class="modal-footer-saas">
+                    <button onclick="this.closest('.modal-overlay').remove()" class="btn-saas btn-saas-ghost">닫기</button>
+                    <button onclick="window.updateOrderStatus('${order.id}', '${order.status === 'new' ? 'done' : 'new'}'); this.closest('.modal-overlay').remove();" class="btn-saas btn-saas-primary">
+                        ${order.status === 'new' ? '발송처리' : '신규로 변경'}
+                    </button>
+                </div>
+            </div>
+        </div>
+    `;
+
+    document.body.insertAdjacentHTML('beforeend', modalHTML);
+    if (window.lucide) window.lucide.createIcons();
+};
+
 function renderAdminOrders() {
     const list = document.getElementById('admin-order-list');
-    renderOrdersToolbar(); // 툴바 생성
+    renderOrdersToolbar(); 
     list.innerHTML = ''; 
     document.getElementById('admin-orders-loading').classList.remove('hidden');
     document.getElementById('btn-load-more-orders').classList.add('hidden');
@@ -198,7 +314,7 @@ function renderAdminOrders() {
     });
 }
 
-// [기능 복구] 더 보기 (Pagination)
+// ... existing code (loadMoreOrders, filterOrders, searchLocalOrders, toggleBulkBtn, bulkAction) ...
 window.loadMoreOrders = () => {
     if (!state.lastOrderDoc) return;
     const q = query(getPublicDataRef(COLLECTIONS.ORDERS), orderBy('createdAt', 'desc'), startAfter(state.lastOrderDoc), limit(20));
@@ -224,13 +340,16 @@ window.loadMoreOrders = () => {
     });
 };
 
-// [기능 복구] 로컬 검색 및 필터링
 window.filterOrders = (type) => {
     document.querySelectorAll('.order-filter-btn').forEach(b => {
-        b.classList.toggle('bg-slate-800', b.dataset.filter === type);
-        b.classList.toggle('text-white', b.dataset.filter === type);
-        b.classList.toggle('bg-white', b.dataset.filter !== type);
-        b.classList.toggle('text-slate-600', b.dataset.filter !== type);
+        const isActive = b.dataset.filter === type;
+        b.classList.toggle('bg-blue-600', isActive);
+        b.classList.toggle('text-white', isActive);
+        b.classList.toggle('border-blue-600', isActive);
+
+        b.classList.toggle('bg-white', !isActive);
+        b.classList.toggle('text-slate-600', !isActive);
+        b.classList.toggle('border-slate-200', !isActive);
     });
     
     const list = document.getElementById('admin-order-list');
@@ -260,7 +379,6 @@ window.searchLocalOrders = (val) => {
     if(window.lucide) window.lucide.createIcons();
 };
 
-// [기능 복구] 일괄 삭제 (Bulk Action)
 window.toggleBulkBtn = () => {
     const checked = document.querySelectorAll('.order-checkbox:checked').length > 0;
     document.getElementById('btn-bulk-delete').classList.toggle('hidden', !checked);
@@ -326,9 +444,9 @@ function setActiveProductStatusBtn() {
     const v = btn.getAttribute('data-status');
     const active = v === productStatusFilter;
 
-    btn.classList.toggle('bg-slate-900', active);
+    btn.classList.toggle('bg-blue-600', active);
     btn.classList.toggle('text-white', active);
-    btn.classList.toggle('border-slate-900', active);
+    btn.classList.toggle('border-blue-600', active);
 
     btn.classList.toggle('bg-white', !active);
     btn.classList.toggle('text-slate-600', !active);
@@ -444,71 +562,89 @@ window.toggleProductFeatured = async (id, current) => {
   }
 };
 
+// [수정됨] 상품 관리 모바일 레이아웃 개선
 function createProductRow(p, id) {
-  const safeDate = (() => {
-    const d = new Date(p.createdAt || 0);
-    return isNaN(d.getTime()) ? "-" : d.toLocaleDateString();
-  })();
+    const isSoldOut = !!p.soldOut;
+    const isFeatured = !!p.featured;
+    const priceFormatted = Number(p.price).toLocaleString();
+    const salePriceFormatted = p.salePrice ? Number(p.salePrice).toLocaleString() : null;
+    
+    // 추천 마크 (text-[9px], 아이콘 사이즈 8)
+    const featuredBadge = isFeatured ? `<span class="flex items-center gap-0.5 text-[9px] bg-yellow-50 text-yellow-600 px-1.5 py-0.5 rounded border border-yellow-100 font-bold tracking-tight shrink-0"><i data-lucide="star" size="8" class="fill-current"></i> 추천</span>` : '';
 
-  const isSoldOut = !!p.soldOut;
-  const isFeatured = !!p.featured;
-
-  return `
-    <tr class="admin-table-row group">
-      <td class="admin-table-td w-20">
-        <div class="w-12 h-12 rounded-lg bg-slate-100 overflow-hidden border border-slate-200">
-          <img src="${p.image}" class="w-full h-full object-cover">
-        </div>
-      </td>
-      <td class="admin-table-td">
-        <span class="mobile-label">상품명</span>
-        <div>
-          <div class="font-bold text-slate-800 text-sm">${p.name}</div>
-          <div class="text-xs text-slate-400 font-mono">${safeDate}</div>
-        </div>
-      </td>
-      <td class="admin-table-td">
-        <span class="mobile-label">카테고리</span>
-        <span class="text-xs font-bold text-slate-500 bg-slate-100 px-2 py-1 rounded border border-slate-200">${p.category || '미분류'}</span>
-      </td>
-      <td class="admin-table-td">
-        <span class="mobile-label">가격</span>
-        ${
-          p.salePrice
-            ? `<div class="flex flex-col">
-                 <span class="text-red-500 font-bold text-sm">${Number(p.salePrice).toLocaleString()}원</span>
-                 <span class="line-through text-xs text-slate-400">${Number(p.price).toLocaleString()}원</span>
-               </div>`
-            : `<span class="font-bold text-slate-700">${Number(p.price).toLocaleString()}원</span>`
-        }
-      </td>
-
-      <!-- ✅ 상태(품절) + 메인노출 인라인 토글 -->
-      <td class="admin-table-td">
-        <span class="mobile-label">상태</span>
-        <div class="flex flex-row gap-1.5 items-center flex-wrap">
-          <button type="button"
-            onclick="window.toggleProductSoldOut('${id}', ${isSoldOut})"
-            class="px-2 py-1 rounded text-[10px] font-bold transition border shadow-sm whitespace-nowrap ${isSoldOut ? 'bg-red-50 text-red-600 border-red-200 hover:bg-red-100' : 'bg-green-50 text-green-700 border-green-200 hover:bg-green-100'}">
-            ${isSoldOut ? '품절' : '판매중'}
-          </button>
-
-          <button type="button"
-            onclick="window.toggleProductFeatured('${id}', ${isFeatured})"
-            class="px-2 py-1 rounded text-[10px] font-bold transition border shadow-sm whitespace-nowrap ${isFeatured ? 'bg-blue-600 text-white border-blue-600 hover:bg-blue-700' : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'}">
-            ${isFeatured ? '메인' : '일반'}
-          </button>
+    return `
+    <tr class="admin-table-row product-card group hover:bg-slate-50/80 transition-colors" id="prod-${id}">
+      <td class="product-img-col p-4">
+        <div class="relative w-14 h-14 rounded-lg bg-slate-100 border border-slate-200 overflow-hidden shrink-0 group-hover:scale-105 transition-transform">
+            <img src="${p.image}" class="w-full h-full object-cover">
+            ${isSoldOut ? '<div class="absolute inset-0 bg-slate-900/60 flex items-center justify-center text-[10px] font-bold text-white tracking-widest">품절</div>' : ''}
         </div>
       </td>
 
-      <td class="admin-table-td text-right mobile-card-actions">
-        <div class="flex items-center justify-end gap-2">
-          <button onclick="window.openProductModal('${id}')" class="p-2 rounded-lg hover:bg-blue-50 text-slate-400 hover:text-blue-600 transition border border-transparent hover:border-blue-100">
-            <i data-lucide="edit-3" size="16"></i>
-          </button>
-          <button onclick="window.deleteItem('products','${id}')" class="p-2 rounded-lg hover:bg-red-50 text-slate-400 hover:text-red-600 transition border border-transparent hover:border-red-100">
-            <i data-lucide="trash-2" size="16"></i>
-          </button>
+      <td class="product-info-col p-4">
+        <div class="flex flex-col h-full justify-center w-full">
+            <!-- [모바일 Layout] 1번째 줄: 품명 + 카테고리 + 추천마크 -->
+            <div class="flex items-center gap-2 mb-1.5 w-full">
+                <div class="text-sm font-bold text-slate-800 leading-tight line-clamp-1 truncate max-w-[120px] md:max-w-none">${p.name}</div>
+                <span class="md:hidden text-[10px] text-slate-500 font-medium bg-slate-100 px-1.5 py-0.5 rounded border border-slate-200 shrink-0">${p.category || '미분류'}</span>
+                <div class="md:hidden shrink-0">${featuredBadge}</div>
+                
+                <!-- PC용 추천마크 (숨김 처리) -->
+                <div class="hidden md:flex shrink-0">${featuredBadge}</div>
+            </div>
+            
+            <!-- [모바일 Layout] 2번째 줄: 가격 + 우측 정렬된 컨트롤 버튼들 -->
+            <div class="flex items-center justify-between w-full">
+                <div class="mobile-only-price shrink-0">
+                     ${salePriceFormatted 
+                        ? `<span class="text-sm font-bold text-red-600 font-numeric mr-1">${salePriceFormatted}원</span>`
+                        : `<span class="text-sm font-bold text-slate-700 font-numeric">${priceFormatted}원</span>`
+                    }
+                </div>
+
+                <!-- 모바일용 액션 버튼 그룹 (판매중 토글 / 수정 / 삭제) -->
+                <div class="flex items-center gap-1.5 md:hidden ml-auto">
+                    <button onclick="window.toggleProductSoldOut('${id}', ${isSoldOut})" class="px-2 py-1 rounded text-[10px] font-bold border transition ${isSoldOut ? 'bg-red-50 text-red-600 border-red-100' : 'bg-green-50 text-green-600 border-green-100'}">
+                        ${isSoldOut ? '품절' : '판매중'}
+                    </button>
+                    <button onclick="window.openProductModal('${id}')" class="p-1.5 bg-white border border-slate-200 rounded text-slate-400 hover:text-blue-600 active:bg-slate-50">
+                        <i data-lucide="edit-3" size="13"></i>
+                    </button>
+                    <button onclick="window.deleteItem('products','${id}')" class="p-1.5 bg-white border border-slate-200 rounded text-slate-400 hover:text-red-600 active:bg-slate-50">
+                        <i data-lucide="trash-2" size="13"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+      </td>
+
+      <!-- PC 전용 컬럼들 (desktop-only-cell) -->
+      <td class="product-category-col desktop-only-cell text-left hidden md:table-cell">
+        <span class="text-xs font-bold text-slate-600 bg-slate-100 px-2 py-1 rounded-md border border-slate-200">${p.category || '미분류'}</span>
+      </td>
+
+      <td class="product-price-col desktop-only-cell text-left hidden md:table-cell">
+        <div class="flex flex-col">
+            ${salePriceFormatted 
+                ? `<span class="text-sm font-bold text-red-600 font-numeric">${salePriceFormatted}원</span>
+                   <span class="text-xs text-slate-400 line-through font-numeric">${priceFormatted}원</span>`
+                : `<span class="text-sm font-bold text-slate-700 font-numeric">${priceFormatted}원</span>`
+            }
+        </div>
+      </td>
+
+      <td class="product-status-col desktop-only-cell p-4 hidden md:table-cell">
+        <div class="flex items-center gap-2">
+            <button type="button" onclick="window.toggleProductSoldOut('${id}', ${isSoldOut})" class="status-toggle-btn px-2 py-1 rounded text-[10px] font-bold border transition ${isSoldOut ? 'bg-red-50 text-red-600 border-red-100' : 'bg-green-50 text-green-600 border-green-100'}">
+                ${isSoldOut ? '품절' : '판매중'}
+            </button>
+        </div>
+      </td>
+
+      <td class="product-actions-col desktop-only-cell p-4 text-right hidden md:table-cell">
+        <div class="flex items-center justify-end gap-1">
+            <button onclick="window.openProductModal('${id}')" class="btn-saas-icon text-slate-400 hover:text-blue-600"><i data-lucide="edit-3" size="15"></i></button>
+            <button onclick="window.deleteItem('products','${id}')" class="btn-saas-icon text-slate-400 hover:text-red-600"><i data-lucide="trash-2" size="15"></i></button>
         </div>
       </td>
     </tr>`;
@@ -639,7 +775,10 @@ window.viewInquiryDetail = async (id) => {
         <div class="space-y-4 pt-4">
             <div class="flex justify-between items-start mb-6">
                 <h3 class="text-xl font-bold text-slate-800">문의 상세</h3>
-                <span class="saas-badge ${hasAnswer ? 'saas-badge-green' : 'saas-badge-blue'}">${hasAnswer ? '답변완료' : '답변대기'}</span>
+                <div class="flex items-center gap-2">
+                    <span class="saas-badge ${hasAnswer ? 'saas-badge-green' : 'saas-badge-blue'}">${hasAnswer ? '답변완료' : '답변대기'}</span>
+                    ${state.isAdmin ? `<button onclick="window.deleteInquiry('${id}')" class="text-xs font-bold text-red-600 hover:text-red-700 hover:bg-red-50 px-3 py-1.5 rounded-lg transition"><i data-lucide="trash-2" size="14"></i></button>` : ''}
+                </div>
             </div>
 
             <div class="bg-slate-50 rounded-xl p-4 border border-slate-100">
@@ -732,7 +871,7 @@ function renderAdminBlogs() {
                     <div class="flex-1 min-w-0">
                         <div class="font-bold text-slate-800 text-sm truncate mb-1">${b.title} ${b.isHidden ? '<span class="text-red-500 text-xs">(숨김)</span>' : ''}</div>
                         <p class="text-xs text-slate-500 line-clamp-1">${b.content}</p>
-                        <div class="text-[10px] text-slate-400 mt-2">${new Date(b.createdAt).toLocaleDateString()}</div>
+                        <div class="text-[10px] text-slate-400 mt-2 font-numeric">${new Date(b.createdAt).toLocaleDateString()}</div>
                     </div>
                     <div class="flex gap-1">
                         <button onclick="window.openBlogModal('${d.id}')" class="p-2 hover:bg-blue-50 text-slate-400 hover:text-blue-600 rounded-lg transition"><i data-lucide="edit-3" size="16"></i></button>
@@ -754,16 +893,44 @@ function renderAdminSettings() {
     const form = document.getElementById('admin-settings-form');
     if (!form) return;
 
+    // 기본 설정
     if (form.storeName) form.storeName.value = d.storeName || '';
     if (form.ownerName) form.ownerName.value = d.ownerName || '';
     if (form.bizNum) form.bizNum.value = d.bizNum || '';
     if (form.csPhone) form.csPhone.value = d.csPhone || '';
-    if (form.address) form.address.value = d.address || '';
-    if (form.footerDesc) form.footerDesc.value = d.footerDesc || '';
 
+    // 계좌 정보
     if (form.bankName) form.bankName.value = d.bankName || '';
     if (form.bankNumber) form.bankNumber.value = d.bankNumber || '';
     if (form.bankOwner) form.bankOwner.value = d.bankOwner || '';
+
+    // 주소/푸터
+    if (form.address) form.address.value = d.address || '';
+    if (form.footerDesc) form.footerDesc.value = d.footerDesc || '';
+
+    // 브랜드/배너 (새로 추가)
+    if (form.logoUrl) {
+        form.logoUrl.value = d.logoUrl || '';
+        const preview = document.getElementById('preview-logoUrl');
+        if (preview && d.logoUrl) {
+            preview.src = d.logoUrl;
+            preview.classList.remove('hidden');
+        }
+    }
+    if (form.mainBannerUrl) {
+        form.mainBannerUrl.value = d.mainBannerUrl || '';
+        const preview = document.getElementById('preview-mainBannerUrl');
+        if (preview && d.mainBannerUrl) {
+            preview.src = d.mainBannerUrl;
+            preview.classList.remove('hidden');
+        }
+    }
+    if (form.mainTitle) form.mainTitle.value = d.mainTitle || '';
+    if (form.mainSubtitle) form.mainSubtitle.value = d.mainSubtitle || '';
+    if (form.mainDesc) form.mainDesc.value = d.mainDesc || '';
+
+    // 아이콘 재렌더링
+    if (window.lucide) window.lucide.createIcons();
   });
 }
 
@@ -777,15 +944,27 @@ window.saveAdminSettings = async () => {
     }
 
     const data = {
+        // 기본 설정
         storeName: form.storeName?.value || "",
         ownerName: form.ownerName?.value || "",
         bizNum: form.bizNum?.value || "",
         csPhone: form.csPhone?.value || "",
-        address: form.address?.value || "",
-        footerDesc: form.footerDesc?.value || "",
+
+        // 계좌 정보
         bankName: form.bankName?.value || "",
         bankNumber: form.bankNumber?.value || "",
-        bankOwner: form.bankOwner?.value || ""
+        bankOwner: form.bankOwner?.value || "",
+
+        // 주소/푸터
+        address: form.address?.value || "",
+        footerDesc: form.footerDesc?.value || "",
+
+        // 브랜드/배너 (새로 추가)
+        logoUrl: form.logoUrl?.value || "",
+        mainBannerUrl: form.mainBannerUrl?.value || "",
+        mainTitle: form.mainTitle?.value || "",
+        mainSubtitle: form.mainSubtitle?.value || "",
+        mainDesc: form.mainDesc?.value || ""
     };
 
     console.log('저장할 데이터:', data);
@@ -809,27 +988,22 @@ window.openEditor = (type, id = null, data = {}) => {
     document.getElementById("editor-type").value = type;
     const fields = document.getElementById("editor-fields");
     
-    // [디자인 적용] 모달 그리드 레이아웃
-    fields.className =
-  type === "상품"
-    ? "grid grid-cols-1 md:grid-cols-3 gap-3 max-h-[62vh] overflow-y-auto pr-1"
-    : "grid grid-cols-1 md:grid-cols-2 gap-4";
+    // [디자인 적용] 모달 그리드 레이아웃 - 상품도 2열
+    fields.className = "grid grid-cols-1 md:grid-cols-2 gap-4 max-h-[62vh] overflow-y-auto pr-1";
     fields.innerHTML = "";
 
     const config = {
         "상품": [
-            { n: "name", l: "상품명", col: 3 },
-            { n: "category", l: "카테고리", hidden: true }, // 드롭다운 UI가 별도이므로 hidden 유지
+            { n: "name", l: "상품명" },
             { n: "unit", l: "단위(예: 1kg)" },
-             { n: "price", l: "정상가(원)" },
+            { n: "category", l: "카테고리", hidden: true },
+            { n: "price", l: "정상가(원)" },
             { n: "salePrice", l: "할인가(원, 선택)" },
-
-            { n: "image", l: "이미지", img: true, col: 3 },
-             { n: "description", l: "설명", area: true, col: 3 },
-
-             { n: "featured", l: "메인 노출(오늘의 추천)", chk: true },
+            { n: "image", l: "이미지", img: true, col: 2 },
+            { n: "description", l: "설명", area: true, col: 2 },
+            { n: "featured", l: "메인 노출(오늘의 추천)", chk: true },
             { n: "soldOut", l: "품절", chk: true }
-            ],
+        ],
 
         "공지": [{ n: "title", l: "제목", col: 2 }, { n: "content", l: "내용", area: true, col: 2 }, { n: "showPopup", l: "메인 팝업 노출", chk: true }],
         "블로그": [{ n: "title", l: "제목", col: 2 }, { n: "image", l: "대표 이미지", img: true, col: 2 }, { n: "content", l: "본문 내용", area: true, col: 2 }, { n: "isHidden", l: "숨김 처리", chk: true }]
@@ -975,7 +1149,7 @@ function renderCategoryChipsInModal(selectedCat = "") {
         return `<div class="relative group"><button onclick="window.selectCategory('${cat}')" class="category-chip px-3 py-1.5 rounded-lg text-xs font-bold border transition ${isSelected ? 'bg-blue-600 text-white border-blue-600 shadow-sm' : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'}">${cat}</button><button onclick="window.removeCategory('${cat}')" class="cat-delete-btn hidden absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-[10px] shadow-sm"><i data-lucide="x" size="10"></i></button></div>`;
     }).join("");
 
-    container.innerHTML = `<div class="flex flex-wrap gap-2 items-center">${chips}</div><div class="mt-3 flex gap-2 items-center"><button id="cat-edit-toggle" onclick="window.toggleCategoryEdit()" class="text-xs text-slate-500 underline font-medium hover:text-slate-800">편집</button><div id="cat-add-group" class="flex gap-1 hidden"><input id="new-cat-input" placeholder="새 카테고리" class="border rounded px-2 py-1 text-xs w-24 outline-none focus:border-blue-500"><button onclick="window.addCategory()" class="bg-slate-800 text-white px-2 py-1 rounded text-xs hover:bg-slate-700">추가</button></div></div>`;
+    container.innerHTML = `<div class="flex flex-wrap gap-2 items-center">${chips}</div><div class="mt-3 flex gap-2 items-center"><button id="cat-edit-toggle" onclick="window.toggleCategoryEdit()" class="text-xs text-slate-500 underline font-medium hover:text-slate-800">편집</button><div id="cat-add-group" class="flex gap-1 hidden"><input id="new-cat-input" placeholder="새 카테고리" class="border rounded px-2 py-1 text-xs w-24 outline-none focus:border-blue-500"><button onclick="window.addCategory()" class="bg-slate-800 text-white px-2 py-1 rounded-xl hover:bg-slate-700">추가</button></div></div>`;
     if(window.lucide) window.lucide.createIcons();
 }
 
@@ -1124,6 +1298,17 @@ window.deleteItem = async (colName, id) => {
 };
 
 window.deleteNotice = async(id) => window.deleteItem(COLLECTIONS.NOTICES, id);
+
+window.deleteInquiry = async (id) => {
+    if (!confirm("정말 이 문의를 삭제하시겠습니까?")) return;
+    try {
+        await deleteDoc(doc(getPublicDataRef(COLLECTIONS.INQUIRIES), id));
+        document.getElementById("inquiry-detail-modal").classList.add("hidden");
+        window.showToast("문의가 삭제되었습니다.");
+    } catch (e) {
+        window.showToast("삭제 실패", "error");
+    }
+};
 
 window.registerAnswer = async (id) => {
     const currentTextEl = document.getElementById(`inquiry-answer-text-${id}`);
